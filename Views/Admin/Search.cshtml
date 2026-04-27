@@ -1,0 +1,139 @@
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Search Results";
+    ViewData["ActivePage"] = "Dashboard";
+
+    var userResults    = ViewBag.UserResults    as List<TripGenius.Models.User>                         ?? new List<TripGenius.Models.User>();
+    var tripResults    = ViewBag.TripResults    as List<TripGenius.Models.Trip>                         ?? new List<TripGenius.Models.Trip>();
+    var bookingResults = ViewBag.BookingResults as List<TripGenius.Models.ViewModels.BookingViewModel>  ?? new List<TripGenius.Models.ViewModels.BookingViewModel>();
+    int total = userResults.Count + tripResults.Count + bookingResults.Count;
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Search Results</h2>
+            <p>
+                @if (!string.IsNullOrEmpty((string)ViewBag.SearchQuery))
+                {
+                    <span>Found <strong>@total</strong> result(s) for "<strong>@ViewBag.SearchQuery</strong>"</span>
+                }
+                else
+                {
+                    <span>Enter a search term in the navbar above.</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    @if (string.IsNullOrEmpty((string)ViewBag.SearchQuery))
+    {
+        <div class="card">
+            <div class="empty-state-box">
+                <i class="fas fa-search"></i>
+                <h3>Search the Panel</h3>
+                <p>Use the search bar above to find users, trips, or bookings.</p>
+            </div>
+        </div>
+    }
+    else if (total == 0)
+    {
+        <div class="card">
+            <div class="empty-state-box">
+                <i class="fas fa-folder-open"></i>
+                <h3>No Results Found</h3>
+                <p>Try different keywords. You searched for "@ViewBag.SearchQuery".</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- USER RESULTS -->
+        @if (userResults.Any())
+        {
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-head">
+                    <h3><i class="fas fa-users" style="color:#5a8a00;margin-right:8px;"></i> Users (@userResults.Count)</h3>
+                    <a asp-controller="Admin" asp-action="Users" class="view-all-link">View All Users</a>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+                        <tbody>
+                            @foreach (var u in userResults)
+                            {
+                                <tr>
+                                    <td><div class="user-cell"><div class="avatar">@u.Name[0]</div><strong>@u.Name</strong></div></td>
+                                    <td>@u.Email</td>
+                                    <td><span class="role-badge @(u.Role=="Admin"?"admin":"user")">@u.Role</span></td>
+                                    <td><span class="badge-status @((u.Status??"Active").ToLower()=="active"?"confirmed":"cancelled")">@(u.Status ?? "Active")</span></td>
+                                    <td>@u.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- TRIP RESULTS -->
+        @if (tripResults.Any())
+        {
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-head">
+                    <h3><i class="fas fa-map-marked-alt" style="color:#5a8a00;margin-right:8px;"></i> Trips (@tripResults.Count)</h3>
+                    <a asp-controller="Admin" asp-action="Trips" class="view-all-link">View All Trips</a>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead><tr><th>Title</th><th>Destination</th><th>Price</th><th>Duration</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in tripResults)
+                            {
+                                <tr>
+                                    <td><strong>@t.Title</strong></td>
+                                    <td><i class="fas fa-location-dot" style="color:#5a8a00;margin-right:4px;"></i>@t.Destination</td>
+                                    <td><strong>@t.Price.ToString("N0")</strong></td>
+                                    <td>@t.DurationDays days</td>
+                                    <td><span class="badge-status @t.Status.ToLower()">@t.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- BOOKING RESULTS -->
+        @if (bookingResults.Any())
+        {
+            <div class="card">
+                <div class="card-head">
+                    <h3><i class="fas fa-calendar-check" style="color:#5a8a00;margin-right:8px;"></i> Bookings (@bookingResults.Count)</h3>
+                    <a asp-controller="Admin" asp-action="Bookings" class="view-all-link">View All Bookings</a>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead><tr><th>#</th><th>Customer</th><th>Trip</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody>
+                            @foreach (var b in bookingResults)
+                            {
+                                <tr>
+                                    <td><span class="id-badge">#@b.Id</span></td>
+                                    <td><div class="user-cell"><div class="avatar">@b.CustomerName[0]</div><strong>@b.CustomerName</strong></div></td>
+                                    <td>@b.TripName</td>
+                                    <td><strong>@b.Amount.ToString("N0")</strong></td>
+                                    <td><span class="badge-status @b.Status.ToLower()">@b.Status</span></td>
+                                    <td>@b.BookingDate.ToString("MMM dd, yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
+

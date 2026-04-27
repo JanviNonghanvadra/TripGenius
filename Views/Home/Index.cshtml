@@ -1,0 +1,326 @@
+@model IEnumerable<TripGenius.Models.Trip>
+@{
+    ViewData["Title"] = "Explore the World with TripGenius";
+    var tripsList = Model?.ToList() ?? new List<TripGenius.Models.Trip>();
+    var popularTrips = tripsList.Take(4).ToList();
+}
+
+<!-- -------------------------------------------
+     HERO SECTION
+-------------------------------------------- -->
+<section class="tg-hero">
+    <div class="tg-hero-bg"></div>
+    <div class="tg-hero-overlay"></div>
+    <div class="container position-relative" style="z-index:2;">
+        <div class="row align-items-center min-vh-80">
+            <div class="col-lg-7">
+                <div class="tg-hero-content">
+                    <div class="tg-welcome-badge">
+                        <i class="bi bi-compass-fill"></i>
+                        <span>Your Smart Travel Companion</span>
+                    </div>
+
+                    <h1 class="tg-hero-title">
+                        Explore the<br />
+                        <span class="tg-title-accent">World</span><br />
+                        with TripGenius
+                    </h1>
+
+                    <p class="tg-hero-subtitle">
+                        Plan unforgettable adventures, discover breathtaking destinations, and create memories that last a lifetime — all in one place.
+                    </p>
+
+                    <!-- Search Bar -->
+                    <div class="tg-search-card">
+                        <form class="tg-search-inner" action="/Home/Explore" method="get">
+                            <div class="tg-search-field">
+                                <i class="bi bi-geo-alt-fill tg-search-icon"></i>
+                                <input type="text" name="destination" class="tg-search-input" placeholder="Where do you want to go?" required />
+                            </div>
+                            <div class="tg-search-divider"></div>
+                            <div class="tg-search-field">
+                                <i class="bi bi-calendar3 tg-search-icon"></i>
+                                <input type="date" name="date" class="tg-search-input" />
+                            </div>
+                            <button type="submit" class="btn tg-search-btn">
+                                <i class="bi bi-search"></i>
+                                <span>Explore</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Hero CTAs -->
+                    <div class="d-flex gap-3 flex-wrap align-items-center">
+                        <a asp-controller="Home" asp-action="Explore" class="btn tg-btn-hero-primary">
+                            <i class="bi bi-globe2"></i> Browse Destinations
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="btn tg-btn-hero-outline">
+                            <i class="bi bi-person-plus-fill"></i> Join Free
+                        </a>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="tg-hero-stats mt-4">
+                        <div class="tg-stat">
+                            <span class="tg-stat-num">@tripsList.Count()</span>
+                            <span class="tg-stat-label">Destinations</span>
+                        </div>
+                        <div class="tg-stat-divider"></div>
+                        <div class="tg-stat">
+                            <span class="tg-stat-num">50K+</span>
+                            <span class="tg-stat-label">Happy Travelers</span>
+                        </div>
+                        <div class="tg-stat-divider"></div>
+                        <div class="tg-stat">
+                            <span class="tg-stat-num">4.9?</span>
+                            <span class="tg-stat-label">Average Rating</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Cards -->
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="tg-hero-cards">
+                    <div class="tg-float-card tg-fc-1">
+                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop" alt="Alps" class="tg-fc-img" />
+                        <div class="tg-fc-info">
+                            <span class="tg-fc-name">Swiss Alps</span>
+                            <span class="tg-fc-loc"><i class="bi bi-geo-alt-fill"></i> Switzerland</span>
+                        </div>
+                    </div>
+                    <div class="tg-float-card tg-fc-2">
+                        <img src="https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=300&h=200&fit=crop" alt="Maldives" class="tg-fc-img" />
+                        <div class="tg-fc-info">
+                            <span class="tg-fc-name">Maldives</span>
+                            <span class="tg-fc-loc"><i class="bi bi-geo-alt-fill"></i> Indian Ocean</span>
+                        </div>
+                    </div>
+                    <div class="tg-float-card tg-fc-3">
+                        <span class="tg-fc-emoji">??</span>
+                        <span class="tg-fc-text">@tripsList.Count() Destinations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- -------------------------------------------
+     POPULAR DESTINATIONS
+-------------------------------------------- -->
+<section class="py-5 tg-trending-section">
+    <div class="container">
+        <div class="tg-section-header mb-4">
+            <div>
+                <span class="tg-section-badge">?? Trending Now</span>
+                <h2 class="tg-section-title mt-2">Popular Destinations</h2>
+            </div>
+            <a asp-controller="Home" asp-action="Explore" class="btn tg-view-all-btn">
+                View All <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Large card (use first popular if available) -->
+            <div class="col-lg-5">
+                @if (popularTrips.Any())
+                {
+                    var big = popularTrips.First();
+                    <div class="tg-dest-card tg-dest-large">
+                        <img src="@(big.ImageUrl ?? "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&h=500&fit=crop")"
+                             alt="@big.Title" class="tg-dest-img" />
+                        <div class="tg-dest-overlay">
+                            <div class="tg-dest-badge">Most Popular</div>
+                            <div class="tg-dest-info">
+                                <h3 class="tg-dest-name">@big.Title, @big.Destination</h3>
+                                <p class="tg-dest-desc">@(string.IsNullOrEmpty(big.Description) ? "Discover this amazing destination." : big.Description)</p>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <span class="tg-dest-price">From ?@big.Price.ToString("N0")</span>
+                                    <span class="tg-dest-rating"><i class="bi bi-star-fill"></i> 4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="tg-dest-card tg-dest-large">
+                        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&h=500&fit=crop" alt="Bali" class="tg-dest-img" />
+                        <div class="tg-dest-overlay">
+                            <div class="tg-dest-badge">Most Popular</div>
+                            <div class="tg-dest-info">
+                                <h3 class="tg-dest-name">Bali, Indonesia</h3>
+                                <p class="tg-dest-desc">Tropical paradise with stunning temples & rice terraces</p>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <span class="tg-dest-price">From ?45,000</span>
+                                    <span class="tg-dest-rating"><i class="bi bi-star-fill"></i> 4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Grid cards -->
+            <div class="col-lg-7">
+                <div class="row g-4">
+                    @if (popularTrips.Any())
+                    {
+                        foreach (var d in popularTrips)
+                        {
+                            <div class="col-6">
+                                <div class="tg-dest-card">
+                                    <img src="@(d.ImageUrl ?? "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop")" alt="@d.Title" class="tg-dest-img" />
+                                    <div class="tg-dest-overlay">
+                                        <div class="tg-dest-info">
+                                            <h5 class="tg-dest-name">@d.Title, @d.Destination</h5>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <span class="tg-dest-price">From ?@d.Price.ToString("N0")</span>
+                                                <span class="tg-dest-rating"><i class="bi bi-star-fill"></i> 4.8</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No destinations found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- -------------------------------------------
+     FEATURES — 3 COLUMNS
+-------------------------------------------- -->
+<section class="py-5 tg-features-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="tg-section-badge">? Why TripGenius?</span>
+            <h2 class="tg-section-title mt-2">Everything You Need to Travel Smarter</h2>
+            <p class="tg-section-sub mt-2">From discovery to departure — we've got every step covered.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="tg-feature-card text-center">
+                    <div class="tg-feature-icon tg-fi-green mx-auto mb-4">
+                        <i class="bi bi-globe2"></i>
+                    </div>
+                    <h5 class="tg-feature-title">Discover 200+ Destinations</h5>
+                    <p class="tg-feature-text">
+                        Browse our curated collection of world-class destinations, complete with local tips, photos, and real traveler reviews.
+                    </p>
+                    <a asp-controller="Home" asp-action="Explore" class="tg-feature-link">
+                        Browse Destinations <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="tg-feature-card text-center">
+                    <div class="tg-feature-icon tg-fi-blue mx-auto mb-4">
+                        <i class="bi bi-map-fill"></i>
+                    </div>
+                    <h5 class="tg-feature-title">Smart Trip Planner</h5>
+                    <p class="tg-feature-text">
+                        Build a complete day-by-day itinerary with our intelligent planner.
+                        Set dates, budgets, and travel styles in minutes.
+                    </p>
+                    <a asp-controller="Home" asp-action="PlanTrip" class="tg-feature-link">
+                        Start Planning <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="tg-feature-card text-center">
+                    <div class="tg-feature-icon tg-fi-amber mx-auto mb-4">
+                        <i class="bi bi-bookmark-heart-fill"></i>
+                    </div>
+                    <h5 class="tg-feature-title">Save & Organize Trips</h5>
+                    <p class="tg-feature-text">
+                        Bookmark your favourite destinations, save planned trips, and revisit your travel wishlist anytime — from any device.
+                    </p>
+                    <a asp-controller="Account" asp-action="Register" class="tg-feature-link">
+                        Create Free Account <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- -------------------------------------------
+     TESTIMONIALS
+-------------------------------------------- -->
+<section class="py-5 tg-testimonials-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="tg-section-badge">?? Traveler Stories</span>
+            <h2 class="tg-section-title mt-2">What Our Travelers Say</h2>
+        </div>
+        <div class="row g-4">
+            @{
+                var reviews = new[]
+                {
+                    new { Name = "Priya S.", Location = "Mumbai", Quote = "TripGenius made planning our Bali trip effortless. Everything from flights to day trips was perfectly organized!", Stars = 5, Avatar = "P" },
+                    new { Name = "Arjun M.", Location = "Delhi", Quote = "The destination cards are stunning and the trip planner is incredibly intuitive. Booked Paris in under 10 minutes!", Stars = 5, Avatar = "A" },
+                    new { Name = "Meera K.", Location = "Bangalore", Quote = "I love how I can save trips and come back to them later. This is the travel app I've always wanted.", Stars = 5, Avatar = "M" }
+                };
+            }
+            @foreach (var r in reviews)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <div class="tg-review-card">
+                        <div class="tg-review-stars mb-3">
+                            @for (int i = 0; i < r.Stars; i++)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                        </div>
+                        <p class="tg-review-quote">"@r.Quote"</p>
+                        <div class="d-flex align-items-center gap-3 mt-3">
+                            <div class="tg-review-avatar">@r.Avatar</div>
+                            <div>
+                                <div class="tg-review-name">@r.Name</div>
+                                <div class="tg-review-loc"><i class="bi bi-geo-alt-fill"></i> @r.Location</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- -------------------------------------------
+     CTA  BANNER
+-------------------------------------------- -->
+<section class="tg-cta-banner py-5">
+    <div class="container">
+        <div class="tg-cta-inner text-center">
+            <i class="bi bi-compass-fill tg-cta-big-icon"></i>
+            <h2 class="tg-cta-title">Ready to Start Your Adventure?</h2>
+            <p class="tg-cta-sub">Join 50,000+ travelers who plan smarter trips with TripGenius — completely free.</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap mt-4">
+                <a asp-controller="Account" asp-action="Register" class="btn tg-btn-cta-primary">
+                    <i class="bi bi-person-plus-fill"></i> Create Free Account
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="btn tg-btn-cta-outline">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+

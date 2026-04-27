@@ -1,0 +1,237 @@
+@model List<TripGenius.Models.ViewModels.BookingViewModel>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActivePage"] = "Dashboard";
+}
+<style>    /* Update these specific parts in your admin.css */
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr; /* Gives more room to the line chart */
+        gap: 20px;
+        margin-bottom: 24px;
+        align-items: stretch;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px; /* Fixed height ensures stability */
+        width: 100%;
+    }
+
+    /* Pie charts look best when slightly smaller than line charts */
+    .pie-container {
+        height: 280px;
+        margin: 0 auto;
+    }
+
+    .chart-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-head {
+        flex-shrink: 0; /* Prevents header from squishing */
+    }</style>
+@* 
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Common Options for Responsiveness
+        const commonOptions = {
+            responsive: true, maintainAspectRatio: false, plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Poppins' } } }
+            }
+        };
+
+        // Revenue Line Chart
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line', data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Revenue (₹)', data: [30000, 45000, 35000, 90000, 125000, 110000], // Replace with real data
+                    borderColor: '#5a8a00', backgroundColor: 'rgba(90, 138, 0, 0.1)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#5a8a00'
+                }]
+            }, options: {
+                ...commonOptions, scales: {
+                    y: { beginAtZero: true, grid: { display: true, color: '#f0ece0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Categories Pie Chart
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'doughnut', // Doughnut looks cleaner for modern dashboards
+            data: {
+                labels: ['Adventure', 'City', 'Cultural', 'Beach'],
+                datasets: [{
+                    data: [35, 20, 25, 20], // Replace with real data
+                    backgroundColor: ['#5a8a00', '#f9a825', '#1565c0', '#e53935'], borderWidth: 0, hoverOffset: 10
+                }]
+            }, options: {
+                ...commonOptions, cutout: '70%' // Makes it a sleek doughnut
+            }
+        });
+    </script>
+} *@
+@section Scripts {
+    <script>
+        const chartMonths = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartMonths ?? new string[] { }));
+        const chartRevenue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartRevenue ?? new decimal[] { }));
+        const chartBookings = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartBookings ?? new int[] { }));
+        const catLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.CategoryLabels ?? new string[] { }));
+        const catData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.CategoryData ?? new int[] { }));
+    </script>
+}
+
+<div class="admin-page">
+    <!-- HEADER -->
+    <div class="page-header">
+        <div>
+            <h2>Dashboard</h2>
+            <p>Welcome back, @(ViewBag.AdminName ?? "Admin")! Here's what's happening today.</p>
+        </div>
+        <div class="header-date">
+            <i class="fas fa-calendar-alt"></i>
+            <span>@DateTime.Now.ToString("MMMM dd, yyyy")</span>
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="quick-actions">
+        <a asp-controller="Admin" asp-action="Users"    class="quick-card"><i class="fas fa-users"></i><span>Users</span></a>
+        <a asp-controller="Admin" asp-action="Trips"    class="quick-card"><i class="fas fa-map-marked-alt"></i><span>Trips</span></a>
+        <a asp-controller="Admin" asp-action="Bookings" class="quick-card"><i class="fas fa-calendar-check"></i><span>Bookings</span></a>
+        <a asp-controller="Admin" asp-action="Payments" class="quick-card"><i class="fas fa-credit-card"></i><span>Payments</span></a>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon users"><i class="fas fa-users"></i></div>
+            <div class="stat-body">
+                <h3>@(ViewBag.UserCount ?? 0)</h3>
+                <span>Total Users</span>
+                <p class="stat-delta positive"><i class="fas fa-arrow-up"></i> +12.5%</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon trips"><i class="fas fa-map-marked-alt"></i></div>
+            <div class="stat-body">
+                <h3>@(ViewBag.TripsCount ?? 0)</h3>
+                <span>Active Trips</span>
+                <p class="stat-delta positive"><i class="fas fa-arrow-up"></i> +8.2%</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bookings"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-body">
+                <h3>@(ViewBag.BookingCount ?? 0)</h3>
+                <span>Total Bookings</span>
+                <p class="stat-delta positive"><i class="fas fa-arrow-up"></i> +23.1%</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon revenue"><i class="fas fa-indian-rupee-sign"></i></div>
+            <div class="stat-body">
+                <h3>@String.Format("{0:N0}", ViewBag.Revenue ?? 0)</h3>
+                <span>Total Revenue</span>
+                <p class="stat-delta positive"><i class="fas fa-arrow-up"></i> +15.3%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-grid">
+        <div class="card chart-card">
+            <div class="card-head">
+                <h3>Revenue & Bookings</h3>
+                <span class="card-badge">Last 6 months</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+        <div class="card chart-card">
+            <div class="card-head">
+                <h3>Trip Categories</h3>
+                <span class="card-badge">Distribution</span>
+            </div>
+            <div class="chart-container pie-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+    </div>
+@*     <div class="charts-grid">
+        <div class="card chart-card">
+            <div class="card-head">
+                <h3>Revenue & Bookings</h3>
+                <span class="card-badge">Last 6 months</span>
+            </div>
+            <canvas id="lineChart"></canvas>
+        </div>
+        <div class="card chart-card">
+            <div class="card-head">
+                <h3>Trip Categories</h3>
+                <span class="card-badge">Distribution</span>
+            </div>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div> *@
+
+    <!-- RECENT BOOKINGS -->
+    <div class="card">
+        <div class="card-head">
+            <div>
+                <h3>Recent Bookings</h3>
+                <p class="card-subtitle">Latest customer reservations</p>
+            </div>
+            <a asp-controller="Admin" asp-action="Bookings" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Destination</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var b in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">@(string.IsNullOrEmpty(b.CustomerName) ? "-" : b.CustomerName[0].ToString())</div>
+                                        <strong>@b.CustomerName</strong>
+                                    </div>
+                                </td>
+                                <td>@b.TripName</td>
+                                <td>@b.BookingDate.ToString("MMM dd, yyyy")</td>
+                                <td><strong>@b.Amount.ToString("N0")</strong></td>
+                                <td><span class="badge-status @b.Status.ToLower()">@b.Status</span></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="5" class="empty-td">No recent bookings.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+

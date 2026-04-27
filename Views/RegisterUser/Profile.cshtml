@@ -1,0 +1,199 @@
+@model TripGenius.Models.User
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<section class="tg-profile-hero">
+    <div class="container">
+        <div class="tg-profile-banner">
+            <div class="tg-profile-avatar-wrap">
+                <div class="tg-profile-avatar">
+                    @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                    {
+                        <img src="@Model.ProfileImageUrl" alt="@Model.Name" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-fill"></i>
+                    }
+                </div>
+                <!-- camera button to open file picker -->
+                <button type="button" class="tg-avatar-edit-btn" title="Change photo" id="changePhotoBtn">
+                    <i class="bi bi-camera-fill"></i>
+                </button>
+                @* Move file input into the main profile form and ensure multipart enctype *@
+            </div>
+            <div class="tg-profile-meta">
+                <h2 class="tg-profile-name">@Model.Name</h2>
+                <span class="tg-profile-email"><i class="bi bi-envelope-fill"></i> @Model.Email</span>
+                <div class="tg-profile-badges">
+                    <span class="tg-badge-item">?? World Explorer</span>
+                    <span class="tg-badge-item">?? @ViewBag.TripsCount Trips Taken</span>
+                    <span class="tg-badge-item">? @ViewBag.ReviewsCount Reviews</span>
+                </div>
+            </div>
+            <div class="tg-profile-stats-row">
+                <div class="tg-ps-item">
+                    <span class="tg-ps-num">@ViewBag.TripsCount</span>
+                    <span class="tg-ps-label">Trips</span>
+                </div>
+                <div class="tg-ps-item">
+                    <span class="tg-ps-num">@ViewBag.SavedCount</span>
+                    <span class="tg-ps-label">Saved</span>
+                </div>
+                <div class="tg-ps-item">
+                    <span class="tg-ps-num">@ViewBag.ReviewsCount</span>
+                    <span class="tg-ps-label">Reviews</span>
+                </div>
+                <div class="tg-ps-item">
+                    <span class="tg-ps-num">@ViewBag.CountriesCount</span>
+                    <span class="tg-ps-label">Countries</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="tg-profile-card">
+                    <div class="tg-profile-card-header">
+                        <h5><i class="bi bi-person-lines-fill"></i> Personal Information</h5>
+                        <button class="btn tg-edit-toggle-btn" id="editToggle">
+                            <i class="bi bi-pencil"></i> Edit Profile
+                        </button>
+                    </div>
+                    <div class="tg-profile-card-body">
+                        <form id="profileForm" method="post" asp-action="Profile" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="tg-form-label">First Name</label>
+                                    <input type="text" name="firstName" class="form-control tg-form-input" value="@(Model.Name?.Split(' ').FirstOrDefault() ?? "")" disabled id="firstName" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="tg-form-label">Last Name</label>
+                                    <input type="text" name="lastName" class="form-control tg-form-input" value="@(Model.Name?.Split(' ').Skip(1).FirstOrDefault() ?? "")" disabled id="lastName" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="tg-form-label">Email Address</label>
+                                    <input type="email" name="email" class="form-control tg-form-input" value="@Model.Email" disabled />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="tg-form-label">Phone Number</label>
+                                    <input type="tel" name="phone" class="form-control tg-form-input" value="@Model.Phone" disabled />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="tg-form-label">Country</label>
+                                    <select class="form-select tg-form-input" disabled>
+                                        <option selected>India</option>
+                                        <option>USA</option>
+                                        <option>UK</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="tg-form-label">Date of Birth</label>
+                                    <input type="date" class="form-control tg-form-input" value="1995-07-15" disabled />
+                                </div>
+                                <div class="col-12">
+                                    <label class="tg-form-label">Bio</label>
+                                    <textarea class="form-control tg-form-textarea" rows="3" disabled>Avid traveler and adventure seeker. I love exploring new cultures, trying local foods, and capturing memories through photography.</textarea>
+                                </div>
+                            </div>
+
+                            @* File input inside the same form so it will post with multipart *@
+                            <input type="file" name="profileImage" id="profileImageInput" accept="image/*" class="d-none" />
+
+                            <div class="tg-form-actions mt-4 d-none" id="formActions">
+                                <button type="button" class="btn tg-btn-outline" id="cancelEdit">Cancel</button>
+                                <button type="submit" class="btn tg-btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="tg-profile-card mb-4">
+                    <div class="tg-profile-card-header">
+                        <h5><i class="bi bi-clock-history"></i> Recent Activity</h5>
+                    </div>
+                    <div class="tg-profile-card-body">
+                        <div class="tg-activity-list">
+                            @* Render some server-side recent activity if available *@
+                            @if (Model.Bookings != null && Model.Bookings.Any())
+                            {
+                                foreach (var b in Model.Bookings.OrderByDescending(x=>x.BookingDate).Take(4))
+                                {
+                                    <div class="tg-activity-item">
+                                        <div class="tg-ai-icon tg-ai-green"><i class="bi bi-airplane"></i></div>
+                                        <div><span class="tg-ai-text">Booked @b.Trip?.Destination</span><br /><small class="text-muted">@b.BookingDate.ToString("MMM d, yyyy")</small></div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="tg-activity-item">
+                                    <div class="tg-ai-icon tg-ai-blue"><i class="bi bi-bookmark-fill"></i></div>
+                                    <div><span class="tg-ai-text">No recent activity</span><br /><small class="text-muted">Start exploring to see activity here</small></div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tg-profile-card">
+                    <div class="tg-profile-card-header">
+                        <h5><i class="bi bi-trophy"></i> Achievements</h5>
+                    </div>
+                    <div class="tg-profile-card-body">
+                        <div class="tg-achievements">
+                            <div class="tg-achievement">?? World Explorer</div>
+                            <div class="tg-achievement">?? Frequent Flyer</div>
+                            <div class="tg-achievement">?? Photo Master</div>
+                            <div class="tg-achievement tg-achievement-locked">?? Globe Trotter (locked)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    const editToggle = document.getElementById('editToggle');
+    const cancelEdit = document.getElementById('cancelEdit');
+    const formActions = document.getElementById('formActions');
+    const inputs = document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea');
+    const changePhotoBtn = document.getElementById('changePhotoBtn');
+    const profileImageInput = document.getElementById('profileImageInput');
+
+    if (editToggle) editToggle.addEventListener('click', function () {
+        inputs.forEach(i => i.removeAttribute('disabled'));
+        formActions.classList.remove('d-none');
+        editToggle.classList.add('d-none');
+    });
+    if (cancelEdit) cancelEdit.addEventListener('click', function () {
+        inputs.forEach(i => i.setAttribute('disabled', ''));
+        formActions.classList.add('d-none');
+        editToggle.classList.remove('d-none');
+    });
+
+    if (changePhotoBtn && profileImageInput) {
+        changePhotoBtn.addEventListener('click', function () { profileImageInput.click(); });
+        profileImageInput.addEventListener('change', function () {
+            // auto-submit the form when a file is chosen
+            const frm = document.getElementById('profileForm');
+            if (frm) frm.submit();
+        });
+    }
+</script>
+}
+
+
+
+
+

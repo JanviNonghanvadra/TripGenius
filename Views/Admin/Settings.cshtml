@@ -1,0 +1,281 @@
+@model TripGenius.Models.ViewModels.SettingsViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Settings";
+    ViewData["Title"] = "Settings";
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Settings</h2>
+            <p>Configure your TripGenius admin panel preferences</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-success-inline" style="margin-bottom:20px;">
+            <i class="fas fa-check-circle"></i> @TempData["Success"]
+        </div>
+    }
+
+    <div style="display:flex;gap:24px;align-items:flex-start;">
+
+        <!-- LEFT: Nav Tabs -->
+        <div class="card" style="width:240px;flex-shrink:0;padding:16px;">
+            <div style="display:flex;flex-direction:column;gap:4px;" id="settingsTabs">
+                <button class="settings-tab active" onclick="showTab('general')" data-tab="general">
+                    <i class="fas fa-sliders-h"></i> General
+                </button>
+                <button class="settings-tab" onclick="showTab('notifications')" data-tab="notifications">
+                    <i class="fas fa-bell"></i> Notifications
+                </button>
+                <button class="settings-tab" onclick="showTab('email')" data-tab="email">
+                    <i class="fas fa-envelope"></i> Email / SMTP
+                </button>
+                <button class="settings-tab" onclick="showTab('security')" data-tab="security">
+                    <i class="fas fa-shield-alt"></i> Security
+                </button>
+                <button class="settings-tab" onclick="showTab('payment')" data-tab="payment">
+                    <i class="fas fa-credit-card"></i> Payments
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT: Tab Content -->
+        <div style="flex:1;">
+
+            <!-- GENERAL -->
+            <div class="card settings-panel" id="tab-general">
+                <div class="card-head"><h3><i class="fas fa-sliders-h" style="color:#5a8a00;margin-right:8px;"></i>General Settings</h3></div>
+                <form asp-action="SaveGeneralSettings" method="post" class="settings-form">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-tag"></i> Site Name</label>
+                            <input asp-for="SiteName" class="form-control" placeholder="TripGenius" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Contact Email</label>
+                            <input asp-for="ContactEmail" class="form-control" placeholder="contact@tripgenius.com" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-phone"></i> Phone</label>
+                            <input asp-for="Phone" class="form-control" placeholder="+91 98765 43210" />
+                        </div>
+                    </div>
+                    <div class="form-group full-width" style="margin-top:0;">
+                        <label><i class="fas fa-align-left"></i> Site Description</label>
+                        <textarea asp-for="SiteDescription" class="form-control" rows="3" placeholder="Your site description..."></textarea>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-action js-submit-btn"><i class="fas fa-save"></i> Save General</button></div>
+                </form>
+            </div>
+
+            <!-- NOTIFICATIONS -->
+            <div class="card settings-panel" id="tab-notifications" style="display:none;">
+                <div class="card-head"><h3><i class="fas fa-bell" style="color:#5a8a00;margin-right:8px;"></i>Notification Settings</h3></div>
+                <form asp-action="SaveNotificationSettings" method="post" class="settings-form">
+                    @Html.AntiForgeryToken()
+                    <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px;">
+                        @foreach (var (label, asp) in new[] { ("Email Notifications", "EmailNotifications"), ("New User Registration", "NewUserRegistration"), ("Booking Confirmations", "BookingConfirmations"), ("Review Notifications", "ReviewNotifications"), ("Payment Alerts", "PaymentAlerts") })
+                        {
+                            <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;color:#444;">
+                                @switch(asp)
+                                {
+                                    case "EmailNotifications":    <input type="checkbox" asp-for="EmailNotifications" class="toggle-check js-auto-save" /> break;
+                                    case "NewUserRegistration":   <input type="checkbox" asp-for="NewUserRegistration" class="toggle-check js-auto-save" /> break;
+                                    case "BookingConfirmations":  <input type="checkbox" asp-for="BookingConfirmations" class="toggle-check js-auto-save" /> break;
+                                    case "ReviewNotifications":   <input type="checkbox" asp-for="ReviewNotifications" class="toggle-check js-auto-save" /> break;
+                                    default:                      <input type="checkbox" asp-for="PaymentAlerts" class="toggle-check js-auto-save" /> break;
+                                }
+                                <span>@label</span>
+                            </label>
+                        }
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-action js-submit-btn"><i class="fas fa-save"></i> Save Notifications</button></div>
+                </form>
+            </div>
+
+            <!-- EMAIL -->
+            <div class="card settings-panel" id="tab-email" style="display:none;">
+                <div class="card-head"><h3><i class="fas fa-envelope" style="color:#5a8a00;margin-right:8px;"></i>SMTP / Email Settings</h3></div>
+                <form asp-action="SaveEmailSettings" method="post" class="settings-form">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-server"></i> SMTP Host</label>
+                            <input asp-for="SMTPHost" class="form-control" placeholder="smtp.gmail.com" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-network-wired"></i> SMTP Port</label>
+                            <input asp-for="SMTPPort" class="form-control" placeholder="587" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Username</label>
+                            <input asp-for="SMTPUsername" class="form-control" placeholder="your@email.com" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-lock"></i> Password</label>
+                            <input asp-for="SMTPPassword" type="password" class="form-control" placeholder="SMTP password" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-shield-alt"></i> Encryption</label>
+                            <select asp-for="Encryption" class="form-control">
+                                <option value="TLS">TLS</option>
+                                <option value="SSL">SSL</option>
+                                <option value="None">None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-action js-submit-btn"><i class="fas fa-save"></i> Save Email Settings</button></div>
+                </form>
+            </div>
+
+            <!-- SECURITY -->
+            <div class="card settings-panel" id="tab-security" style="display:none;">
+                <div class="card-head"><h3><i class="fas fa-shield-alt" style="color:#5a8a00;margin-right:8px;"></i>Security Settings</h3></div>
+                <form asp-action="SaveSecuritySettings" method="post" class="settings-form">
+                    @Html.AntiForgeryToken()
+                    <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px;">
+                        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;color:#444;">
+                            <input type="checkbox" asp-for="TwoFactorAuth" class="toggle-check js-auto-save" />
+                            <span>Enable Two-Factor Authentication</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;color:#444;">
+                            <input type="checkbox" asp-for="LoginAlerts" class="toggle-check js-auto-save" />
+                            <span>Send Login Alerts via Email</span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-action js-submit-btn"><i class="fas fa-save"></i> Save Security</button>
+                        <a asp-controller="Admin" asp-action="ChangePassword" class="btn-secondary-action"><i class="fas fa-key"></i> Change Password</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PAYMENT -->
+            <div class="card settings-panel" id="tab-payment" style="display:none;">
+                <div class="card-head"><h3><i class="fas fa-credit-card" style="color:#5a8a00;margin-right:8px;"></i>Payment Settings</h3></div>
+                <form asp-action="SavePaymentSettings" method="post" class="settings-form">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-coins"></i> Currency Name</label>
+                            <input asp-for="Currency" class="form-control" placeholder="INR" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-indian-rupee-sign"></i> Currency Symbol</label>
+                            <input asp-for="CurrencySymbol" class="form-control" placeholder="" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-percent"></i> Processing Fee (%)</label>
+                            <input asp-for="ProcessingFee" class="form-control" placeholder="2.5" />
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-plus-circle"></i> Fixed Fee ()</label>
+                            <input asp-for="FixedFee" class="form-control" placeholder="0" />
+                        </div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-action js-submit-btn"><i class="fas fa-save"></i> Save Payment Settings</button></div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-tab {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 11px 14px;
+    border-radius: 10px; border: none; background: none;
+    cursor: pointer; font-size: 13.5px; font-weight: 500; color: #555;
+    transition: background 0.2s; text-align: left;
+    font-family: "Poppins", sans-serif;
+}
+.settings-tab i { width: 16px; text-align: center; color: #5a8a00; }
+.settings-tab:hover { background: #f2f7e8; color: #3d6e00; }
+.settings-tab.active { background: #5a8a00; color: #fff; font-weight: 600; }
+.settings-tab.active i { color: #fff; }
+.toggle-check { width: 18px; height: 18px; accent-color: #5a8a00; cursor: pointer; flex-shrink:0; }
+</style>
+
+@section Scripts {
+<script>
+function showTab(name) {
+    document.querySelectorAll('.settings-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).style.display = 'block';
+    document.querySelector('[data-tab="' + name + '"]').classList.add('active');
+}
+// On load check hash
+window.addEventListener('DOMContentLoaded', () => {
+    const hash = location.hash.replace('#', '');
+    if (hash) showTab(hash);
+
+    // Setup AJAX form submissions
+    document.querySelectorAll('.settings-form').forEach(form => {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const submitBtn = form.querySelector('.js-submit-btn');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+
+            const url = form.getAttribute('action') || window.location.pathname;
+            const fd = new FormData(form);
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+
+                let json = null;
+                try { json = await res.json(); } catch { }
+
+                if (res.ok && (json == null || json.success == null || json.success === true)) {
+                    // show inline success
+                    showInlineMessage(form, 'Saved successfully.', 'success');
+                } else {
+                    const msg = json?.message || 'Failed to save settings.';
+                    showInlineMessage(form, msg, 'error');
+                }
+            } catch (err) {
+                console.error('Save settings error', err);
+                showInlineMessage(form, 'An error occurred while saving.', 'error');
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-save"></i> Save'; }
+            }
+        });
+    });
+
+    // Auto-submit for checkbox toggles
+    document.querySelectorAll('.js-auto-save').forEach(chk => {
+        chk.addEventListener('change', function () {
+            const f = this.closest('form');
+            if (f) f.dispatchEvent(new Event('submit', { cancelable: true }));
+        });
+    });
+});
+
+function showInlineMessage(form, message, type) {
+    // Remove existing
+    const existing = form.querySelector('.inline-msg');
+    if (existing) existing.remove();
+    const div = document.createElement('div');
+    div.className = 'inline-msg ' + (type === 'success' ? 'alert-success-inline' : 'alert-error-inline');
+    div.style.margin = '12px 0';
+    div.textContent = message;
+    form.insertBefore(div, form.firstChild);
+    setTimeout(() => { div.remove(); }, 3500);
+}
+</script>
+}
+
+
+
+
+

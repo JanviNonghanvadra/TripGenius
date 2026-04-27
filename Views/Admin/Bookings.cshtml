@@ -1,0 +1,139 @@
+@model IEnumerable<TripGenius.Models.ViewModels.BookingViewModel>
+@{
+    ViewData["Title"] = "Bookings";
+    ViewData["ActivePage"] = "Bookings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Bookings Management</h2>
+            <p>Monitor and manage all travel bookings</p>
+        </div>
+        <button class="btn-export" onclick="window.print()"><i class="fas fa-download"></i> Export</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon bookings"><i class="fas fa-calendar-check"></i></div>
+            <div class="stat-body"><h3>@(ViewBag.TotalBookings ?? 0)</h3><span>Total Bookings</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon active"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-body"><h3>@(ViewBag.ConfirmedCount ?? 0)</h3><span>Confirmed</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+            <div class="stat-body"><h3>@(ViewBag.PendingCount ?? 0)</h3><span>Pending</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon revenue"><i class="fas fa-indian-rupee-sign"></i></div>
+            <div class="stat-body"><h3>@String.Format("{0:N0}", ViewBag.TotalRevenue ?? 0)</h3><span>Total Revenue</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <!-- FILTERS -->
+        <form method="get" asp-action="Bookings" class="filter-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" value="@Context.Request.Query["search"]" placeholder="Search customer or trip..." />
+            </div>
+            <select name="status" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                @foreach (var s in new[] { "Confirmed", "Pending", "Cancelled" })
+                {
+                    <option value="@s" selected="@(Context.Request.Query["status"] == s)">@s</option>
+                }
+
+                @* @foreach (var s in new[]{"Confirmed""Pending""Cancelled"})
+                {
+                    <option value="@s" @(Context.Request.Query["status"] == s ? "selected" : "")>@s</option>
+                } *@
+            </select>
+            <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
+        </form>
+
+        <!-- TABLE -->
+        <div class="table-wrap">
+            <table class="admin-table" id="bookingsTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Customer</th>
+                        <th>Trip</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><span class="id-badge">#@item.Id</span></td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="avatar">@(string.IsNullOrEmpty(item.CustomerName) ? "-" : item.CustomerName[0].ToString())</div>
+                                        <strong>@item.CustomerName</strong>
+                                    </div>
+                                </td>
+                                <td>@item.TripName</td>
+                                <td>@item.BookingDate.ToString("MMM dd, yyyy")</td>
+                                <td><strong>@item.Amount.ToString("N0")</strong></td>
+                                <td><span class="badge-status @item.PaymentStatus.ToLower()">@item.PaymentStatus</span></td>
+                                <td><span class="badge-status @item.Status.ToLower()">@item.Status</span></td>
+                                <td>
+                                    <div class="action-group">
+                                        <!-- Change Status Form -->
+                                        <form asp-action="UpdateBookingStatus" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <select name="status" class="mini-select" onchange="this.form.submit()" title="Change status">
+                                                <option value="">Status</option>
+                                                <option value="Confirmed">Confirm</option>
+                                                <option value="Pending">Pending</option>
+                                                <option value="Cancelled">Cancel</option>
+                                            </select>
+                                        </form>
+                                        <!-- Delete -->
+                                        <form asp-action="DeleteBooking" method="post" style="display:inline;" onsubmit="return confirm('Delete booking #@item.Id?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="action-btn delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="8" class="empty-td"><i class="fas fa-inbox"></i> No bookings found.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        @if ((int)(ViewBag.TotalPages ?? 0) > 1)
+        {
+            <div class="pagination">
+                @for (int i = 1; i <= (int)ViewBag.TotalPages; i++)
+                {
+                    <a href="?page=@i&search=@Context.Request.Query["search"]&status=@Context.Request.Query["status"]"
+                       class="page-btn @(ViewBag.CurrentPage == i ? "active" : "")">@i</a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+
+

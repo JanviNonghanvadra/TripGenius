@@ -1,0 +1,115 @@
+@{
+    bool isGuest = !(User.Identity?.IsAuthenticated == true);
+}
+
+<nav class="navbar navbar-expand-lg tg-navbar sticky-top">
+    <div class="container">
+        @if (isGuest)
+        {
+            <a class="navbar-brand tg-logo" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-compass tg-logo-icon"></i>
+                <span>TripGenius</span>
+            </a>
+        }
+        else
+        {
+            <a class="navbar-brand tg-logo" asp-controller="RegisterUser" asp-action="Home">
+                <i class="bi bi-compass tg-logo-icon"></i>
+                <span>TripGenius</span>
+            </a>
+        }
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            @if (isGuest)
+            {
+                <!-- GUEST NAV -->
+                <ul class="navbar-nav mx-auto gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                           asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Explore" ? "active" : "")"
+                           asp-controller="Home" asp-action="Explore">
+                            <i class="bi bi-globe2"></i> Explore
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "PlanTrip" ? "active" : "")"
+                           asp-controller="Home" asp-action="PlanTrip">
+                            <i class="bi bi-map"></i> Plan Trip
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tg-guest-nav-actions d-flex align-items-center gap-2">
+                    <a asp-controller="Account" asp-action="Login"
+                       class="btn tg-nav-login-btn @(ViewContext.RouteData.Values["action"]?.ToString() == "Login" ? "active" : "")">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </a>
+                    <a asp-controller="Account" asp-action="Register"
+                       class="btn tg-nav-register-btn">
+                        <i class="bi bi-person-plus-fill"></i> Register
+                    </a>
+                </div>
+            }
+            else
+            {
+                <!-- REGISTERED NAV -->
+                <ul class="navbar-nav mx-auto gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Home" ? "active" : "")" asp-controller="RegisterUser" asp-action="Home">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Explore" ? "active" : "")" asp-controller="RegisterUser" asp-action="Explore">
+                            <i class="bi bi-globe2"></i> Explore
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "PlanTrip" ? "active" : "")" asp-controller="RegisterUser" asp-action="PlanTrip">
+                            <i class="bi bi-map"></i> Plan Trip
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tg-nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "SavedTrip" ? "active" : "")" asp-controller="RegisterUser" asp-action="SavedTrip">
+                            <i class="bi bi-bookmark-heart"></i> Saved Trips
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tg-user-pill d-flex align-items-center gap-2">
+                    <div class="tg-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="tg-user-info">
+                        <span class="tg-username">@(User.Identity?.Name ?? "Traveler")</span>
+                        <span class="tg-user-role">Traveler</span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm tg-dropdown-btn" data-bs-toggle="dropdown">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end tg-dropdown">
+                            <li><a class="dropdown-item" asp-controller="RegisterUser" asp-action="Profile"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a class="dropdown-item" asp-controller="RegisterUser" asp-action="Settings"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><a class="dropdown-item" asp-controller="RegisterUser" asp-action="Privacy"><i class="bi bi-shield-check"></i> Privacy</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout"><i class="bi bi-box-arrow-right"></i> Sign Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</nav>
+
+
+

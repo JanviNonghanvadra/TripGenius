@@ -1,0 +1,52 @@
+﻿<footer class="tg-footer">
+    <div class="container">
+        <div class="row g-4 py-5">
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-compass tg-footer-logo-icon"></i>
+                    <span class="tg-footer-brand">TripGenius</span>
+                </div>
+                <p class="tg-footer-tagline">Your intelligent travel companion. Discover the world, one adventure at a time.</p>
+                <div class="tg-social-links mt-3">
+                    <a href="#" class="tg-social-btn"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="tg-social-btn"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="tg-social-btn"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="tg-social-btn"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-2 col-6">
+                <h6 class="tg-footer-heading">Navigation</h6>
+                <ul class="tg-footer-links">
+                    <li><a asp-controller="RegisterUser" asp-action="Home">Home</a></li>
+                    <li><a asp-controller="RegisterUser" asp-action="Explore">Explore</a></li>
+                    <li><a asp-controller="RegisterUser" asp-action="PlanTrip">Plan Trip</a></li>
+                    <li><a asp-controller="RegisterUser" asp-action="SavedTrip">Saved Trips</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-6">
+                <h6 class="tg-footer-heading">Account</h6>
+                <ul class="tg-footer-links">
+                    <li><a asp-controller="RegisterUser" asp-action="Profile">Profile</a></li>
+                    <li><a asp-controller="RegisterUser" asp-action="Settings">Settings</a></li>
+                    <li><a asp-controller="RegisterUser" asp-action="Privacy">Privacy</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4">
+                <h6 class="tg-footer-heading">Newsletter</h6>
+                <p class="tg-footer-tagline mb-3">Get travel inspiration in your inbox.</p>
+                <div class="tg-newsletter-form d-flex gap-2">
+                    <input type="email" class="form-control tg-newsletter-input" placeholder="your@email.com" />
+                    <button class="btn tg-newsletter-btn">Subscribe</button>
+                </div>
+            </div>
+        </div>
+        <div class="tg-footer-bottom">
+            <span>&copy; @DateTime.Now.Year TripGenius. All rights reserved.</span>
+            <span>Made with <i class="bi bi-heart-fill text-danger"></i> for travelers</span>
+        </div>
+    </div>
+</footer>
+
+
+
+

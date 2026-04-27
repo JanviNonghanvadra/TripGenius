@@ -1,0 +1,260 @@
+﻿@model IEnumerable<TripGenius.Models.Trip>
+@{
+    ViewData["Title"] = "Saved Trips";
+}
+
+<section class="tg-page-hero tg-saved-hero">
+    <div class="container">
+        <div class="tg-ph-content">
+            <span class="tg-section-badge">📌 Wishlist</span>
+            <h1 class="tg-ph-title">Saved Trips</h1>
+            <p class="tg-ph-subtitle">Your curated collection of dream destinations</p>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="tg-saved-tabs">
+                <button class="tg-tab active" data-filter="All">All Trips (@(Model?.Count() ?? 0))</button>
+                <button class="tg-tab" data-filter="Planned">Planned</button>
+                <button class="tg-tab" data-filter="Wishlist">Wishlist</button>
+            </div>
+            <a asp-controller="RegisterUser" asp-action="PlanTrip" class="btn tg-btn-primary">
+                <i class="bi bi-plus-circle"></i> ➕ Add New Trip
+            </a>
+        </div>
+
+        <div class="row g-4" id="savedTripsRow">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var trip in Model)
+                {
+                    // ensure status value is present
+                    var status = string.IsNullOrWhiteSpace(trip.Status) ? "Active" : trip.Status;
+                    <div class="col-lg-6" data-status="@status">
+                        <div class="tg-saved-card">
+                            <div class="tg-sc-img-wrapper">
+                                <img src="@(string.IsNullOrWhiteSpace(trip.ImageUrl) ? "https://via.placeholder.com/500x300?text=No+Image" : trip.ImageUrl)" alt="@(trip.Destination ?? trip.Title)" class="tg-sc-img" />
+                                <div class="tg-sc-status" style="background-color: #1971c2">Saved</div>
+                                <form asp-controller="RegisterUser" asp-action="ToggleSave" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@trip.Id" />
+                                    <button type="submit" class="tg-sc-remove-btn"><i class="bi bi-bookmark-fill"></i></button>
+                                </form>
+                            </div>
+                            <div class="tg-sc-body">
+                                <div class="tg-sc-top">
+                                    <div>
+                                        <h4 class="tg-sc-name">@(!string.IsNullOrWhiteSpace(trip.Title) ? trip.Title : trip.Destination)</h4>
+                                        @if (!string.IsNullOrWhiteSpace(trip.Description))
+                                        {
+                                            <span class="tg-sc-country"><i class="bi bi-geo-alt-fill"></i> @trip.Description</span>
+                                        }
+                                    </div>
+
+                                    <div class="tg-sc-budget">
+                                        @{ 
+                                            decimal displayAmount = 0m;
+                                            if (trip.Price > 0) displayAmount = trip.Price;
+                                            else if (trip.Budget > 0) displayAmount = trip.Budget;
+                                        }
+
+                                        @if (displayAmount > 0)
+                                        {
+                                            <text>₹@String.Format("{0:N0}", displayAmount)</text>
+                                        }
+                                        else
+                                        {
+                                            <text>₹0</text>
+                                        }
+                                    </div>
+
+                                    @{ 
+                                        var start = trip.StartDate != default ? trip.StartDate.ToString("MMM d, yyyy") : string.Empty;
+                                        var end = trip.EndDate != default ? trip.EndDate.ToString("MMM d, yyyy") : string.Empty;
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(start) || !string.IsNullOrEmpty(end))
+                                    {
+                                        <div class="tg-sc-date">
+                                            <i class="bi bi-calendar3"></i>
+                                            <text> @start@if(!string.IsNullOrEmpty(start) && !string.IsNullOrEmpty(end)){ <text> - </text> }@end</text>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="tg-sc-date">
+                                            <i class="bi bi-calendar3"></i>
+                                            <text> @trip.CreatedAt.ToString("MMM d, yyyy")</text>
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (trip.DurationDays > 0)
+                                {
+                                    <div class="tg-sc-duration">Duration: @trip.DurationDays day(s)</div>
+                                }
+                                <div class="tg-sc-actions">
+                                    <a asp-controller="RegisterUser" asp-action="PlanTrip" class="btn tg-sc-btn-primary">
+                                        <i class="bi bi-pencil"></i> ✏️ Edit Plan
+                                    </a>
+                                    <button type="button" class="btn tg-sc-btn-outline" onclick="navigator.share && navigator.share({title: '@(trip.Title ?? trip.Destination)', url: window.location.href})">
+                                        <i class="bi bi-share"></i> 🔗 Share
+                                    </button>
+                                    <form asp-controller="RegisterUser" asp-action="ToggleSave" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@trip.Id" />
+                                        <button class="btn tg-sc-btn-danger" type="submit"><i class="bi bi-trash"></i> 🗑️</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-bookmark" style="font-size:3rem; color: var(--tg-border);"></i>
+                    <h5 class="mt-3" style="color: var(--tg-text-light);">📭 No saved trips yet</h5>
+                    <p style="color: var(--tg-text-light);">Explore destinations and tap the bookmark to save trips you love.</p>
+                    <a asp-controller="RegisterUser" asp-action="Explore" class="btn tg-btn-outline">Explore</a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const row = document.getElementById('savedTripsRow');
+    if (!row) return;
+
+    // Tab filtering
+    const tabs = document.querySelectorAll('.tg-saved-tabs .tg-tab');
+    function updateCounts() {
+        const total = row.querySelectorAll('.tg-saved-card').length;
+        const allTab = document.querySelector('.tg-saved-tabs .tg-tab[data-filter="All"]');
+        if (allTab) allTab.textContent = 'All Trips (' + total + ')';
+    }
+
+    function applyFilter(filter) {
+        const cols = row.querySelectorAll('.col-lg-6');
+        let visible = 0;
+        cols.forEach(col => {
+            const status = (col.dataset.status || '').trim();
+            let show = false;
+            if (filter === 'All') show = true;
+            else if (filter === 'Planned') show = status === 'Planned';
+            else if (filter === 'Wishlist') show = status !== 'Planned';
+
+            col.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        const noResults = document.getElementById('noSavedResults');
+        if (noResults) noResults.classList.toggle('d-none', visible > 0);
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const filter = this.dataset.filter || 'All';
+            applyFilter(filter);
+        });
+    });
+
+    // If server rendered no saved cards, try to load from localStorage (static hosting fallback)
+    const serverCards = row.querySelectorAll('.tg-saved-card');
+    if (serverCards.length === 0) {
+        try {
+            const raw = localStorage.getItem('tg_saved_trips');
+            const items = raw ? JSON.parse(raw) : [];
+            if (!items || items.length === 0) return;
+
+            // remove any 'no saved' placeholder
+            const placeholders = row.querySelectorAll('.col-12.text-center');
+            placeholders.forEach(p => p.remove());
+
+            items.forEach(it => {
+                const col = document.createElement('div');
+                col.className = 'col-lg-6';
+                const image = it.imageUrl || 'https://via.placeholder.com/500x300?text=No+Image';
+                const created = it.CreatedAt ? new Date(it.CreatedAt).toLocaleDateString() : '';
+                const dest = (it.destination || 'Unknown');
+                const country = (it.country || '');
+                // determine status for local items (default Saved/Wishlist)
+                const status = it.status || 'Active';
+                col.setAttribute('data-status', status);
+                col.innerHTML = `
+                    <div class="tg-saved-card">
+                        <div class="tg-sc-img-wrapper">
+                            <img src="${image}" alt="${dest}" class="tg-sc-img" />
+                            <div class="tg-sc-status" style="background-color: #1971c2">Saved</div>
+                            <button type="button" class="tg-sc-remove-btn js-remove-saved" data-id="${it.id}"><i class="bi bi-bookmark-fill"></i></button>
+                        </div>
+                        <div class="tg-sc-body">
+                            <div class="tg-sc-top">
+                                <div>
+                                    <h4 class="tg-sc-name">${dest}</h4>
+                                    <span class="tg-sc-country"><i class="bi bi-geo-alt-fill"></i> ${country}</span>
+                                </div>
+                                <div class="tg-sc-budget"></div>
+                            </div>
+                            <div class="tg-sc-date">
+                                <i class="bi bi-calendar3"></i> ${created}
+                            </div>
+                            <div class="tg-sc-actions">
+                                <a href="/RegisterUser/PlanTrip" class="btn tg-sc-btn-primary"><i class="bi bi-pencil"></i> ✏️ Edit Plan</a>
+                                <button class="btn tg-sc-btn-outline" onclick="navigator.share && navigator.share({title: '${dest}', url: window.location.href})"><i class="bi bi-share"></i> 🔗 Share</button>
+                                <button class="btn tg-sc-btn-danger js-delete-local" data-id="${it.id}"><i class="bi bi-trash"></i> 🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                row.appendChild(col);
+            });
+
+            // update tab count
+            updateCounts();
+
+            // attach handlers for remove/un-save/delete
+            row.querySelectorAll('.js-remove-saved').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.dataset.id;
+                    removeLocalSaved(id, this.closest('.col-lg-6'));
+                });
+            });
+            row.querySelectorAll('.js-delete-local').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.dataset.id;
+                    removeLocalSaved(id, this.closest('.col-lg-6'));
+                });
+            });
+
+            function removeLocalSaved(id, node) {
+                try {
+                    const raw2 = localStorage.getItem('tg_saved_trips');
+                    const arr2 = raw2 ? JSON.parse(raw2) : [];
+                    const filtered = arr2.filter(x => x.id != id);
+                    localStorage.setItem('tg_saved_trips', JSON.stringify(filtered));
+                    if (node) node.remove();
+                    // update count
+                    updateCounts();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+        } catch (e) {
+            console.error('Error loading local saved trips', e);
+        }
+    } else {
+        // server rendered cards exist - ensure counts reflect server model
+        updateCounts();
+    }
+
+});
+</script>
+}

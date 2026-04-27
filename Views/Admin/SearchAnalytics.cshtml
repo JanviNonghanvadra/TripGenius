@@ -1,0 +1,104 @@
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "SearchAnalytics";
+    ViewData["Title"] = "Analytics";
+
+    var topDest = ViewBag.TopDestinations as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Analytics</h2>
+            <p>Insights into trips, destinations, and booking trends</p>
+        </div>
+    </div>
+
+    <!-- TOP DESTINATIONS TABLE -->
+    <div class="card" style="margin-bottom:24px;">
+        <div class="card-head">
+            <h3>Top Destinations by Bookings</h3>
+            <span class="card-badge">All time</span>
+        </div>
+        @if (topDest.Any())
+        {
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Trip</th>
+                            <th>Destination</th>
+                            <th>Bookings</th>
+                            <th>Popularity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int rank = 1; int maxCount = 1; }
+                        @foreach (var d in topDest) { if (d.Count > maxCount) maxCount = d.Count; }
+                        @foreach (var d in topDest)
+                        {
+                            int pct = maxCount > 0 ? (int)((d.Count / (double)maxCount) * 100) : 0;
+                            <tr>
+                                <td><span class="rank-badge rank-@rank">@rank</span></td>
+                                <td><strong>@d.Title</strong></td>
+                                <td><i class="fas fa-location-dot" style="color:#5a8a00;margin-right:4px;"></i>@d.Destination</td>
+                                <td><strong>@d.Count</strong></td>
+                                <td>
+                                    <div class="progress-bar-wrap">
+                                        <div class="progress-bar-fill" style="width:@pct%"></div>
+                                        <span>@pct%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            rank++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state-box">
+                <i class="fas fa-chart-bar"></i>
+                <h3>No Data Yet</h3>
+                <p>Booking data will appear here once trips are booked.</p>
+            </div>
+        }
+    </div>
+
+    <!-- QUICK LINKS TO OTHER SECTIONS -->
+    <div class="analytics-cards">
+        <a asp-controller="Admin" asp-action="Users" class="analytics-link-card">
+            <i class="fas fa-users"></i>
+            <div>
+                <strong>User Analytics</strong>
+                <span>View all registered users</span>
+            </div>
+        </a>
+        <a asp-controller="Admin" asp-action="Bookings" class="analytics-link-card">
+            <i class="fas fa-calendar-check"></i>
+            <div>
+                <strong>Booking Analytics</strong>
+                <span>All booking records</span>
+            </div>
+        </a>
+        <a asp-controller="Admin" asp-action="Payments" class="analytics-link-card">
+            <i class="fas fa-credit-card"></i>
+            <div>
+                <strong>Revenue Analytics</strong>
+                <span>Payment history & charts</span>
+            </div>
+        </a>
+        <a asp-controller="Admin" asp-action="Reviews" class="analytics-link-card">
+            <i class="fas fa-star"></i>
+            <div>
+                <strong>Review Analytics</strong>
+                <span>Ratings & feedback</span>
+            </div>
+        </a>
+    </div>
+</div>
+
+
+

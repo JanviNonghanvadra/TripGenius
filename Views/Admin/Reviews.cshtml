@@ -1,0 +1,160 @@
+@model List<TripGenius.Models.Review>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Reviews";
+    ViewData["ActivePage"] = "Reviews";
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Reviews Management</h2>
+            <p>Monitor and moderate customer reviews</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon trips"><i class="fas fa-comment-dots"></i></div><div class="stat-body"><h3>@ViewBag.TotalReviews</h3><span>Total Reviews</span></div></div>
+        <div class="stat-card"><div class="stat-icon revenue"><i class="fas fa-star"></i></div><div class="stat-body"><h3>@ViewBag.AvgRating</h3><span>Avg Rating</span></div></div>
+        <div class="stat-card"><div class="stat-icon pending"><i class="fas fa-clock"></i></div><div class="stat-body"><h3>@ViewBag.PendingReviews</h3><span>Pending</span></div></div>
+        <div class="stat-card"><div class="stat-icon cancelled"><i class="fas fa-flag"></i></div><div class="stat-body"><h3>@ViewBag.FlaggedReviews</h3><span>Flagged</span></div></div>
+    </div>
+
+    <div class="card">
+        <form method="get" class="filter-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" value="@Context.Request.Query["search"]" placeholder="Search reviews..." />
+            </div>
+            <select name="status" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                @foreach (var s in new[] { "Approved", "Pending", "Flagged" })
+                {
+                    <option value="@s" selected="@(Context.Request.Query["status"] == s)">@s</option>
+                }
+
+               @*  @foreach (var s in new[]{"Approved""Pending""Flagged"})
+                {
+                    <option value="@s" @(Context.Request.Query["status"] == s ? "selected":"")>@s</option>
+                } *@
+            </select>
+            <button type="submit" class="btn-filter"><i class="fas fa-filter"></i> Filter</button>
+        </form>
+
+        @if (Model != null && Model.Any())
+        {
+            foreach (var review in Model)
+            {
+                <div class="review-card">
+                    <div class="review-top">
+                        <div class="review-user-info">
+                            <div class="avatar">@review.User.Name[0]</div>
+                            <div>
+                                <strong>@review.User.Name</strong>
+                                <div class="sub-text"><i class="fas fa-map-marker-alt"></i> @review.Trip.Title</div>
+                                <div class="star-row">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="fas fa-star @(i <= review.Rating ? "star-filled" : "star-empty")"></i>
+                                    }
+                                    <span class="review-date">@review.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge-status @review.Status.ToLower()">@review.Status</span>
+                    </div>
+
+                    <p class="review-comment">@review.Comment</p>
+
+                    @if (!string.IsNullOrEmpty(review.AdminReply))
+                    {
+                        <div class="admin-reply-box">
+                            <div class="reply-header">
+                                <i class="fas fa-reply fa-flip-horizontal"></i>
+                                <span><strong>TripGenius Team</strong> replied:</span>
+                                <span class="reply-date">@review.ReplyDate?.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <p class="reply-text">@review.AdminReply</p>
+                        </div>
+                    }
+
+                    <div id="replyForm-@review.Id" class="reply-input-form" style="display:none;">
+                        <form asp-action="ReplyToReview" asp-controller="Admin" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@review.Id" />
+                            <textarea name="reply" placeholder="Write a professional response..." required>@review.AdminReply</textarea>
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel-reply" onclick="toggleReplyForm(@review.Id)">Cancel</button>
+                                <button type="submit" class="btn-submit-reply">Post Reply</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="review-actions">
+                        <button type="button" class="btn-reply-toggle" onclick="toggleReplyForm(@review.Id)">
+                            <i class="fas fa-reply"></i> @(string.IsNullOrEmpty(review.AdminReply) ? "Reply" : "Edit Reply")
+                        </button>
+                        <form asp-action="ApproveReview" asp-controller="Admin" method="post" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@review.Id" />
+                            <button type="submit" class="btn-approve" @(review.Status == "Approved" ? "disabled" : "")>
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                        </form>
+                        <form asp-action="FlagReview" asp-controller="Admin" method="post" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@review.Id" />
+                            <button type="submit" class="btn-flag" @(review.Status == "Flagged" ? "disabled" : "")>
+                                <i class="fas fa-flag"></i> Flag
+                            </button>
+                        </form>
+                        <form asp-action="DeleteReview" asp-controller="Admin" method="post" style="display:inline;"
+                              onsubmit="return confirm('Delete this review?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@review.Id" />
+                            <button type="submit" class="btn-delete-review">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state-box">
+                <i class="fas fa-comment-slash"></i>
+                <h3>No Reviews Found</h3>
+                <p>There are no reviews matching your filters.</p>
+            </div>
+        }
+
+        @if ((int)(ViewBag.TotalPages ?? 0) > 1)
+        {
+            <div class="pagination">
+                @for (int i = 1; i <= (int)ViewBag.TotalPages; i++)
+                {
+                    <a href="?page=@i&search=@Context.Request.Query["search"]&status=@Context.Request.Query["status"]"
+                       class="page-btn @(ViewBag.CurrentPage == i ? "active" : "")">@i</a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleReplyForm(id) {
+            const form = document.getElementById('replyForm-' + id);
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                form.querySelector('textarea').focus();
+            } else {
+                form.style.display = 'none';
+            }
+        }
+    </script>
+}
+
+
+

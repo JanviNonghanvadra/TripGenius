@@ -1,0 +1,345 @@
+﻿@{
+    ViewData["Title"] = "Plan Your Trip";
+}
+
+<!-- Page Hero -->
+<section class="tg-page-hero">
+    <div class="container">
+        <div class="tg-ph-content">
+            <span class="tg-section-badge"><i class="bi bi-map"></i> Plan</span>
+            <h1 class="tg-ph-title mt-2">Plan Your Dream Trip</h1>
+            <p class="tg-ph-subtitle">Fill in a few details and we'll help you craft the perfect itinerary.</p>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-8 col-lg-10">
+
+                <!-- Step indicator -->
+                <div class="tg-plan-form-card">
+                    <div class="tg-pfc-header">
+                        <div class="tg-pfc-steps">
+                            <div class="tg-step active">
+                                <div class="tg-step-num">1</div>
+                                <span class="tg-step-label">Destination</span>
+                            </div>
+                            <div class="tg-step-line"></div>
+                            <div class="tg-step">
+                                <div class="tg-step-num">2</div>
+                                <span class="tg-step-label">Dates</span>
+                            </div>
+                            <div class="tg-step-line"></div>
+                            <div class="tg-step">
+                                <div class="tg-step-num">3</div>
+                                <span class="tg-step-label">Budget</span>
+                            </div>
+                            <div class="tg-step-line"></div>
+                            <div class="tg-step">
+                                <div class="tg-step-num">4</div>
+                                <span class="tg-step-label">Preferences</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tg-pfc-body">
+                        <form id="planForm">
+
+                            <!-- Section 1: Destination -->
+                            <div class="tg-form-section">
+                                <div class="tg-form-section-title">
+                                    <i class="bi bi-geo-alt-fill"></i> Where are you going?
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="tg-form-label">Destination <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-geo-alt tg-input-icon"></i>
+                                            <input type="text" class="tg-form-input w-100"
+                                                   placeholder="e.g. Bali, Indonesia" required />
+                                        </div>
+                                        <div class="tg-field-error d-none">This field is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Origin / Departure City <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-airplane tg-input-icon"></i>
+                                            <input type="text" class="tg-form-input w-100"
+                                                   placeholder="e.g. Mumbai, India" required />
+                                        </div>
+                                        <div class="tg-field-error d-none">This field is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Trip Type</label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-briefcase tg-input-icon"></i>
+                                            <select class="tg-form-input form-select w-100" required>
+                                                <option value="">Select type...</option>
+                                                <option>Solo Adventure</option>
+                                                <option>Couple / Honeymoon</option>
+                                                <option>Family Vacation</option>
+                                                <option>Group / Friends</option>
+                                                <option>Business</option>
+                                            </select>
+                                        </div>
+                                        <div class="tg-field-error d-none">This field is required.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Dates -->
+                            <div class="tg-form-section">
+                                <div class="tg-form-section-title">
+                                    <i class="bi bi-calendar3"></i> When are you travelling?
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="tg-form-label">Departure Date <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-calendar-event tg-input-icon"></i>
+                                            <input type="date" id="depDate" class="tg-form-input w-100" required />
+                                        </div>
+                                        <div class="tg-field-error d-none">This field is required.</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="tg-form-label">Return Date <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-calendar-check tg-input-icon"></i>
+                                            <input type="date" id="retDate" class="tg-form-input w-100" required />
+                                        </div>
+                                        <div class="tg-field-error d-none">This field is required.</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="tg-form-label">Duration</label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-clock tg-input-icon"></i>
+                                            <input type="text" id="duration" class="tg-form-input w-100"
+                                                   placeholder="Auto-calculated" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Number of Travelers <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-people tg-input-icon"></i>
+                                            <input type="number" class="tg-form-input w-100" min="1" max="50" value="2" required />
+                                        </div>
+                                        <div class="tg-field-error d-none">This field is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Children (Under 12)</label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-emoji-smile tg-input-icon"></i>
+                                            <input type="number" class="tg-form-input w-100" min="0" max="10" value="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Budget -->
+                            <div class="tg-form-section">
+                                <div class="tg-form-section-title">
+                                    <i class="bi bi-wallet2"></i> What's your budget?
+                                </div>
+                                <div class="tg-budget-options mb-4">
+                                    <label class="tg-budget-opt">
+                                        <input type="radio" name="budget" value="budget" />
+                                        <div class="tg-bo-card">
+                                            <i class="bi bi-piggy-bank"></i>
+                                            <span>Budget</span>
+                                            <small>Under Rs. 30,000</small>
+                                        </div>
+                                    </label>
+                                    <label class="tg-budget-opt">
+                                        <input type="radio" name="budget" value="comfort" checked />
+                                        <div class="tg-bo-card">
+                                            <i class="bi bi-bag-check"></i>
+                                            <span>Comfort</span>
+                                            <small>Rs. 30K - 1L</small>
+                                        </div>
+                                    </label>
+                                    <label class="tg-budget-opt">
+                                        <input type="radio" name="budget" value="luxury" />
+                                        <div class="tg-bo-card">
+                                            <i class="bi bi-gem"></i>
+                                            <span>Luxury</span>
+                                            <small>Rs. 1L+</small>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Estimated Total Budget (Rs.)</label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-currency-rupee tg-input-icon"></i>
+                                            <input type="number" class="tg-form-input w-100" placeholder="e.g. 75000" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Preferred Currency</label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-cash-coin tg-input-icon"></i>
+                                            <select class="tg-form-input form-select w-100">
+                                                <option value="INR" selected>Indian Rupee (INR)</option>
+                                                <option value="USD">US Dollar (USD)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Preferences -->
+                            <div class="tg-form-section">
+                                <div class="tg-form-section-title">
+                                    <i class="bi bi-sliders"></i> Travel Preferences
+                                </div>
+
+                                <label class="tg-form-label mb-3">What kind of experiences interest you?</label>
+                                <div class="tg-trip-type-grid mb-4">
+                                    @{
+                                        var interests = new[]
+                                        {
+                                            new { Icon = "bi bi-water",       Label = "Beach" },
+                                            new { Icon = "bi bi-snow2",       Label = "Mountains" },
+                                            new { Icon = "bi bi-bank2",       Label = "Culture" },
+                                            new { Icon = "bi bi-cup-hot",     Label = "Food" },
+                                            new { Icon = "bi bi-compass",     Label = "Adventure" },
+                                            new { Icon = "bi bi-tree",        Label = "Nature" },
+                                            new { Icon = "bi bi-bag",         Label = "Shopping" },
+                                            new { Icon = "bi bi-heart-pulse", Label = "Wellness" },
+                                        };
+                                    }
+                                    @foreach (var i in interests)
+                                    {
+                                        <label class="tg-type-option">
+                                            <input type="checkbox" name="interests" value="@i.Label" />
+                                            <div class="tg-type-card">
+                                                <i class="@i.Icon tg-type-icon"></i>
+                                                <span>@i.Label</span>
+                                            </div>
+                                        </label>
+                                    }
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="tg-form-label">Additional Notes / Special Requests</label>
+                                    <textarea class="tg-form-textarea form-control"
+                                              placeholder="Any special requirements, accessibility needs, or notes for your trip..."
+                                              rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Submit -->
+                            <div class="tg-form-actions pt-2">
+                                <button type="button" class="btn tg-btn-outline" onclick="clearForm()">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                                <button type="submit" class="btn tg-btn-primary">
+                                    <i class="bi bi-send-fill"></i> Plan My Trip
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Save-to-account nudge -->
+                <div class="tg-plantrip-nudge mt-4">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>
+                        Want to save this trip and revisit it later?
+                        <a asp-controller="Account" asp-action="Register" class="tg-nudge-link">Create a free account</a>
+                        or <a asp-controller="Account" asp-action="Login" class="tg-nudge-link">sign in</a>.
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- Sidebar tips -->
+            <div class="col-xl-3 col-lg-3 d-none d-xl-block">
+                <div class="tg-plan-tips">
+                    <h6 class="tg-tips-heading"><i class="bi bi-lightbulb-fill"></i> Quick Tips</h6>
+                    <ul class="tg-tips-list">
+                        <li><i class="bi bi-check-circle-fill"></i> Book 2-3 months in advance for the best deals.</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Always check visa requirements early.</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Travel insurance is worth every rupee.</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Pack light - most destinations have laundry.</li>
+                        <li><i class="bi bi-check-circle-fill"></i> Off-peak season = fewer crowds + lower costs.</li>
+                    </ul>
+
+                    <div class="tg-tips-cta mt-4">
+                        <p class="mb-2" style="font-size:0.88rem; color: var(--tg-text-mid);">Save your plan &amp; access it anywhere.</p>
+                        <a asp-controller="Account" asp-action="Register" class="btn tg-btn-primary w-100">
+                            <i class="bi bi-person-plus-fill"></i> Join Free
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Success Toast -->
+<div id="successToast" class="tg-toast" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i> Trip plan submitted! <a asp-controller="Account" asp-action="Register">Sign up</a> to save it.
+</div>
+
+@section Scripts {
+<script>
+// Auto-calculate duration
+const dep = document.getElementById('depDate');
+const ret = document.getElementById('retDate');
+const dur = document.getElementById('duration');
+function calcDuration() {
+    if (dep.value && ret.value) {
+        const d1 = new Date(dep.value), d2 = new Date(ret.value);
+        const nights = Math.round((d2 - d1) / 86400000);
+        dur.value = nights > 0 ? nights + ' night' + (nights > 1 ? 's' : '') : 'Invalid dates';
+    }
+}
+dep.addEventListener('change', calcDuration);
+ret.addEventListener('change', calcDuration);
+
+// Set min date to today
+const today = new Date().toISOString().split('T')[0];
+dep.min = today; ret.min = today;
+
+// Submit with validation
+const form = document.getElementById('planForm');
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    let isValid = true;
+    form.querySelectorAll('.tg-input-group').forEach(group => {
+        const input = group.querySelector(':invalid');
+        const err = group.nextElementSibling;
+        if (err && err.classList.contains('tg-field-error')) {
+            if (input) {
+                err.classList.remove('d-none');
+                isValid = false;
+            } else {
+                err.classList.add('d-none');
+            }
+        }
+    });
+
+    if (!form.checkValidity() || !isValid) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+    }
+    form.classList.add('was-validated');
+    const toast = document.getElementById('successToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+});
+
+function clearForm() {
+    form.reset();
+    form.classList.remove('was-validated');
+    dur.value = '';
+}
+</script>
+}
+
+

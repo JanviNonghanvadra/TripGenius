@@ -1,0 +1,293 @@
+@{
+    ViewData["Title"] = "Plan Trip";
+    var prefillName = ViewBag.CardName as string ?? string.Empty;
+}
+
+<section class="tg-page-hero tg-plan-hero">
+    <div class="container">
+        <div class="tg-ph-content text-center">
+            <span class="tg-section-badge">??? Plan</span>
+            <h1 class="tg-ph-title">Plan Your Dream Trip ?</h1>
+            <p class="tg-ph-subtitle">Tell us your travel goals and we'll help make them a reality ??</p>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="tg-plan-form-card">
+                    <div class="tg-pfc-header">
+                        <div class="tg-pfc-steps">
+                            <div class="tg-step active">
+                                <span class="tg-step-num">1</span>
+                                <span class="tg-step-label">?? Destination</span>
+                            </div>
+                            <div class="tg-step-line"></div>
+                            <div class="tg-step">
+                                <span class="tg-step-num">2</span>
+                                <span class="tg-step-label">?? Schedule</span>
+                            </div>
+                            <div class="tg-step-line"></div>
+                            <div class="tg-step">
+                                <span class="tg-step-num">3</span>
+                                <span class="tg-step-label">?? Budget</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tg-pfc-body">
+                        <form id="planForm">
+                            <!-- Destination -->
+                            <div class="tg-form-section">
+                                <h4 class="tg-form-section-title"><i class="bi bi-geo-alt-fill"></i> Where are you going? ??</h4>
+                                <div class="mb-4">
+                                    <label class="tg-form-label">Destination <span class="text-danger">*</span></label>
+                                    <div class="tg-input-group">
+                                        <i class="bi bi-search tg-input-icon"></i>
+                                        <input type="text" id="destination" class="form-control tg-form-input" placeholder="e.g. Bali, Paris, Tokyo... ??" />
+                                    </div>
+                                    <div class="tg-field-error d-none" id="destErr">Please enter a destination.</div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="tg-form-label">Trip Type</label>
+                                    <div class="tg-trip-type-grid">
+                                        <label class="tg-type-option">
+                                            <input type="radio" name="tripType" value="Beach" checked />
+                                            <div class="tg-type-card">
+                                                <span class="tg-type-emoji">???</span>
+                                                <span>Beach</span>
+                                            </div>
+                                        </label>
+                                        <label class="tg-type-option">
+                                            <input type="radio" name="tripType" value="Mountains" />
+                                            <div class="tg-type-card">
+                                                <span class="tg-type-emoji">???</span>
+                                                <span>Mountains</span>
+                                            </div>
+                                        </label>
+                                        <label class="tg-type-option">
+                                            <input type="radio" name="tripType" value="City" />
+                                            <div class="tg-type-card">
+                                                <span class="tg-type-emoji">???</span>
+                                                <span>City</span>
+                                            </div>
+                                        </label>
+                                        <label class="tg-type-option">
+                                            <input type="radio" name="tripType" value="Nature" />
+                                            <div class="tg-type-card">
+                                                <span class="tg-type-emoji">??</span>
+                                                <span>Nature</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="tg-form-section">
+                                <h4 class="tg-form-section-title"><i class="bi bi-calendar3"></i> When are you traveling? ??</h4>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Departure Date <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-calendar-event tg-input-icon"></i>
+                                            <input type="date" id="depDate" class="form-control tg-form-input" />
+                                        </div>
+                                        <div class="tg-field-error d-none" id="depErr">Please choose a valid departure date.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="tg-form-label">Return Date <span class="text-danger">*</span></label>
+                                        <div class="tg-input-group">
+                                            <i class="bi bi-calendar-check tg-input-icon"></i>
+                                            <input type="date" id="retDate" class="form-control tg-form-input" />
+                                        </div>
+                                        <div class="tg-field-error d-none" id="retErr">Please choose a valid return date after departure date.</div>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="tg-form-label">Number of Travelers <span class="text-danger">*</span></label>
+                                    <div class="tg-input-group">
+                                        <i class="bi bi-people-fill tg-input-icon"></i>
+                                        <input type="number" id="travelers" class="form-control tg-form-input" min="1" max="50" value="2" />
+                                    </div>
+                                    <div class="tg-field-error d-none" id="travErr">Please enter number of travelers (1-50).</div>
+                                </div>
+                            </div>
+
+                            <!-- Budget -->
+                            <div class="tg-form-section">
+                                <h4 class="tg-form-section-title"><i class="bi bi-wallet2"></i> What's your budget? ??</h4>
+                                <div class="mb-4">
+                                    <label class="tg-form-label">Total Budget (?)</label>
+                                    <div class="tg-input-group">
+                                        <i class="bi bi-currency-rupee tg-input-icon"></i>
+                                        <input type="number" id="budget" class="form-control tg-form-input" placeholder="e.g. 50000" min="0" />
+                                    </div>
+                                    <div class="tg-field-error d-none" id="budgetErr">Please enter a valid budget (positive number) or leave blank.</div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="tg-form-label">Accommodation Preference</label>
+                                    <div class="tg-budget-options">
+                                        <label class="tg-budget-opt">
+                                            <input type="radio" name="budgetPref" value="Budget" />
+                                            <div class="tg-bo-card">
+                                                <i class="bi bi-building"></i>
+                                                <span>Budget</span>
+                                                <small>Hostels & guesthouses</small>
+                                            </div>
+                                        </label>
+                                        <label class="tg-budget-opt">
+                                            <input type="radio" name="budgetPref" value="Standard" checked />
+                                            <div class="tg-bo-card">
+                                                <i class="bi bi-house-door"></i>
+                                                <span>Standard</span>
+                                                <small>3-star hotels</small>
+                                            </div>
+                                        </label>
+                                        <label class="tg-budget-opt">
+                                            <input type="radio" name="budgetPref" value="Luxury" />
+                                            <div class="tg-bo-card">
+                                                <i class="bi bi-stars"></i>
+                                                <span>Luxury</span>
+                                                <small>5-star resorts</small>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="tg-form-label">Special Requests or Notes</label>
+                                    <textarea id="notes" class="form-control tg-form-textarea" rows="3" placeholder="Any special requirements, dietary needs, accessibility needs... ??"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="tg-form-actions">
+                                <button type="button" class="btn tg-btn-outline" onclick="clearForm()">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                                <button type="submit" class="btn tg-btn-primary">
+                                    <i class="bi bi-magic"></i> ? Plan My Trip
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Success Toast -->
+<div id="successToast" class="tg-toast" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i> Trip plan submitted! <a asp-controller="RegisterUser" asp-action="PlanTrip">View plans</a>.
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('planForm');
+    const dep = document.getElementById('depDate');
+    const ret = document.getElementById('retDate');
+    const dur = document.getElementById('duration');
+    const dest = document.getElementById('destination');
+    const travelers = document.getElementById('travelers');
+    const budget = document.getElementById('budget');
+
+    // helper error handlers
+    function showError(elId, msg) {
+        const el = document.getElementById(elId);
+        if (el) { el.textContent = msg; el.classList.remove('d-none'); }
+    }
+    function clearError(elId) { const el = document.getElementById(elId); if (el) el.classList.add('d-none'); }
+
+    // set min date to today
+    const today = new Date().toISOString().split('T')[0];
+    if (dep) dep.min = today;
+    if (ret) ret.min = today;
+
+    // calculate duration if duration field exists
+    function calcDuration() {
+        if (!dep || !ret) return;
+        const d1 = dep.value ? new Date(dep.value) : null;
+        const d2 = ret.value ? new Date(ret.value) : null;
+        if (d1 && d2) {
+            const nights = Math.round((d2 - d1) / 86400000);
+            // write to a readonly field if present
+            const durationEl = document.getElementById('duration');
+            if (durationEl) durationEl.value = nights > 0 ? nights + ' night' + (nights > 1 ? 's' : '') : 'Invalid dates';
+        }
+    }
+    if (dep) dep.addEventListener('change', calcDuration);
+    if (ret) ret.addEventListener('change', calcDuration);
+
+    // clear field errors on input
+    ['destination','depDate','retDate','travelers','budget'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function () {
+            clearError(id === 'depDate' ? 'depErr' : id === 'retDate' ? 'retErr' : id === 'travelers' ? 'travErr' : id === 'budget' ? 'budgetErr' : 'destErr');
+        });
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        let valid = true;
+
+        // destination
+        if (!dest || !dest.value.trim()) { showError('destErr','Please enter a destination.'); valid = false; }
+        else clearError('destErr');
+
+        // dates
+        const depVal = dep ? dep.value : '';
+        const retVal = ret ? ret.value : '';
+        if (!depVal) { showError('depErr','Please select departure date.'); valid = false; }
+        else clearError('depErr');
+        if (!retVal) { showError('retErr','Please select return date.'); valid = false; }
+        else clearError('retErr');
+
+        if (depVal && retVal) {
+            const d1 = new Date(depVal), d2 = new Date(retVal);
+            if (d2 <= d1) { showError('retErr','Return must be after departure.'); valid = false; }
+            else clearError('retErr');
+        }
+
+        // travelers
+        if (!travelers || !travelers.value || Number(travelers.value) < 1 || Number(travelers.value) > 50) {
+            showError('travErr','Please enter number of travelers (1-50).'); valid = false;
+        } else clearError('travErr');
+
+        // budget optional but if present must be positive
+        if (budget && budget.value) {
+            const b = Number(budget.value);
+            if (isNaN(b) || b < 0) { showError('budgetErr','Please enter a valid budget.'); valid = false; }
+            else clearError('budgetErr');
+        } else clearError('budgetErr');
+
+        if (!valid) {
+            // scroll to first error
+            const firstErr = document.querySelector('.tg-field-error:not(.d-none)');
+            if (firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
+            return;
+        }
+
+        // show success toast (demo): replace with server submit when available
+        const toast = document.getElementById('successToast');
+        if (toast) {
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // Optionally clear form or save draft; here we keep values
+    });
+});
+
+function clearForm() {
+    const form = document.getElementById('planForm');
+    if (form) form.reset();
+    const durationEl = document.getElementById('duration'); if (durationEl) durationEl.value = '';
+    // hide all errors
+    ['destErr','depErr','retErr','travErr','budgetErr'].forEach(id => { const el=document.getElementById(id); if (el) el.classList.add('d-none'); });
+}
+</script>
+}

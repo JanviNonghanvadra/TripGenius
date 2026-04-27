@@ -1,0 +1,231 @@
+@model IEnumerable<TripGenius.Models.Trip>
+@{
+    ViewData["Title"] = "Home";
+    var tripsList = Model?.ToList() ?? new List<TripGenius.Models.Trip>();
+    var popularTrips = tripsList.Take(4).ToList();
+    var userName = User?.Identity?.Name ?? "Explorer";
+}
+
+<!-- Hero Section -->
+<section class="tg-hero">
+    <div class="tg-hero-bg"></div>
+    <div class="tg-hero-overlay"></div>
+    <div class="container position-relative">
+        <div class="row align-items-center min-vh-80">
+            <div class="col-lg-7">
+                <div class="tg-hero-content">
+                    <div class="tg-welcome-badge">
+                        <i class="bi bi-sun"></i>
+                        <span>Welcome back, @userName!</span>
+                    </div>
+                    <h1 class="tg-hero-title">
+                        Your Next<br />
+                        <span class="tg-title-accent">Adventure</span><br />
+                        Awaits
+                    </h1>
+                    <p class="tg-hero-subtitle">
+                        Discover breathtaking destinations, plan your dream trips, and create memories that last a lifetime.
+                    </p>
+
+                    <!-- Search Bar -->
+                    <div class="tg-search-card">
+                        <form class="tg-search-inner" action="/RegisterUser/Explore" method="get">
+                            <div class="tg-search-field">
+                                <i class="bi bi-geo-alt-fill tg-search-icon"></i>
+                                <input type="text" name="destination" class="tg-search-input" placeholder="Where do you want to go?" />
+                            </div>
+                            <div class="tg-search-divider"></div>
+                            <div class="tg-search-field">
+                                <i class="bi bi-calendar3 tg-search-icon"></i>
+                                <input type="date" name="date" class="tg-search-input" />
+                            </div>
+                            <button type="submit" class="btn tg-search-btn">
+                                <i class="bi bi-search"></i>
+                                <span>Explore</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="tg-hero-stats">
+                        <div class="tg-stat">
+                            <span class="tg-stat-num">@tripsList.Count()</span>
+                            <span class="tg-stat-label">Destinations</span>
+                        </div>
+                        <div class="tg-stat-divider"></div>
+                        <div class="tg-stat">
+                            <span class="tg-stat-num">50K+</span>
+                            <span class="tg-stat-label">Happy Travelers</span>
+                        </div>
+                        <div class="tg-stat-divider"></div>
+                        <div class="tg-stat">
+                            <span class="tg-stat-num">4.9</span>
+                            <span class="tg-stat-label">Average Rating</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="tg-hero-cards">
+                    <div class="tg-float-card tg-fc-1">
+                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop" alt="Mountain" class="tg-fc-img" />
+                        <div class="tg-fc-info">
+                            <span class="tg-fc-name">Swiss Alps</span>
+                            <span class="tg-fc-loc"><i class="bi bi-geo-alt-fill"></i> Switzerland</span>
+                        </div>
+                    </div>
+                    <div class="tg-float-card tg-fc-2">
+                        <img src="https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=300&h=200&fit=crop" alt="Beach" class="tg-fc-img" />
+                        <div class="tg-fc-info">
+                            <span class="tg-fc-name">Maldives</span>
+                            <span class="tg-fc-loc"><i class="bi bi-geo-alt-fill"></i> Indian Ocean</span>
+                        </div>
+                    </div>
+                    <div class="tg-float-card tg-fc-3">
+                        <span class="tg-fc-emoji">??</span>
+                        <span class="tg-fc-text">@tripsList.Count() Destinations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Actions -->
+<section class="py-5 tg-quick-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <a asp-controller="RegisterUser" asp-action="Explore" class="tg-quick-card text-decoration-none">
+                    <div class="tg-qc-icon tg-qc-green">
+                        <i class="bi bi-globe2"></i>
+                    </div>
+                    <h5 class="tg-qc-title">Explore</h5>
+                    <p class="tg-qc-text">Browse top destinations worldwide</p>
+                    <i class="bi bi-arrow-right tg-qc-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <a asp-controller="RegisterUser" asp-action="PlanTrip" class="tg-quick-card text-decoration-none">
+                    <div class="tg-qc-icon tg-qc-blue">
+                        <i class="bi bi-map"></i>
+                    </div>
+                    <h5 class="tg-qc-title">Plan a Trip</h5>
+                    <p class="tg-qc-text">Create your perfect itinerary</p>
+                    <i class="bi bi-arrow-right tg-qc-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <a asp-controller="RegisterUser" asp-action="SavedTrip" class="tg-quick-card text-decoration-none">
+                    <div class="tg-qc-icon tg-qc-amber">
+                        <i class="bi bi-bookmark-heart"></i>
+                    </div>
+                    <h5 class="tg-qc-title">Saved Trips</h5>
+                    <p class="tg-qc-text">View your wishlisted adventures</p>
+                    <i class="bi bi-arrow-right tg-qc-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <a asp-controller="RegisterUser" asp-action="Profile" class="tg-quick-card text-decoration-none">
+                    <div class="tg-qc-icon tg-qc-purple">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <h5 class="tg-qc-title">My Profile</h5>
+                    <p class="tg-qc-text">Manage your travel identity</p>
+                    <i class="bi bi-arrow-right tg-qc-arrow"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trending Destinations -->
+<section class="py-5 tg-trending-section">
+    <div class="container">
+        <div class="tg-section-header">
+            <div>
+                <span class="tg-section-badge">?? Trending Now</span>
+                <h2 class="tg-section-title">Top Destinations</h2>
+            </div>
+            <a asp-controller="RegisterUser" asp-action="Explore" class="btn tg-view-all-btn">
+                View All <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <div class="col-lg-5">
+                @if (popularTrips.Any())
+                {
+                    var big = popularTrips.First();
+                    <div class="tg-dest-card tg-dest-large">
+                        <img src="@(big.ImageUrl ?? "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&h=400&fit=crop")" alt="@big.Title" class="tg-dest-img" />
+                        <div class="tg-dest-overlay">
+                            <div class="tg-dest-badge">Popular</div>
+                            <div class="tg-dest-info">
+                                <h3 class="tg-dest-name">@big.Title, @big.Destination</h3>
+                                <p class="tg-dest-desc">@(string.IsNullOrEmpty(big.Description) ? "Discover this amazing destination." : big.Description)</p>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="tg-dest-price">From ?@big.Price.ToString("N0")</span>
+                                    <span class="tg-dest-rating"><i class="bi bi-star-fill"></i> 4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="tg-dest-card tg-dest-large">
+                        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&h=400&fit=crop" alt="Bali" class="tg-dest-img" />
+                        <div class="tg-dest-overlay">
+                            <div class="tg-dest-badge">Popular</div>
+                            <div class="tg-dest-info">
+                                <h3 class="tg-dest-name">Bali, Indonesia</h3>
+                                <p class="tg-dest-desc">Tropical paradise with stunning temples</p>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="tg-dest-price">From ?45,000</span>
+                                    <span class="tg-dest-rating"><i class="bi bi-star-fill"></i> 4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-7">
+                <div class="row g-4">
+                    @if (popularTrips.Any())
+                    {
+                        foreach (var d in popularTrips)
+                        {
+                            <div class="col-6">
+                                <div class="tg-dest-card">
+                                    <img src="@(d.ImageUrl ?? "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop")" alt="@d.Title" class="tg-dest-img" />
+                                    <div class="tg-dest-overlay">
+                                        <div class="tg-dest-info">
+                                            <h5 class="tg-dest-name">@d.Title, @d.Destination</h5>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <span class="tg-dest-price">From ?@d.Price.ToString("N0")</span>
+                                                <span class="tg-dest-rating"><i class="bi bi-star-fill"></i> 4.8</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No destinations found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+

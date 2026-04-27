@@ -1,0 +1,226 @@
+﻿@model IEnumerable<TripGenius.Models.Trip>
+
+@{
+    ViewData["Title"] = "Explore Destinations";
+}
+
+<!-- Page Hero -->
+<section class="tg-page-hero tg-explore-hero">
+    <div class="container">
+        <div class="tg-ph-content">
+            <span class="tg-section-badge">🌍 Discover</span>
+            <h1 class="tg-ph-title mt-2">Explore Destinations</h1>
+            <p class="tg-ph-subtitle">Find your perfect getaway from hundreds of handpicked destinations worldwide.</p>
+
+            <!-- Search -->
+            <div class="tg-explore-search">
+                <div class="input-group tg-exp-search-group">
+                    <span class="input-group-text tg-exp-search-icon"><i class="bi bi-search"></i></span>
+                    <input type="text" id="destSearch" class="form-control tg-exp-search-input"
+                           placeholder="Search destinations, countries, experiences..." />
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="tg-filter-chips mt-3">
+                    <button type="button" class="tg-chip active" onclick="filterCards('All', this)">All</button>
+                    <button type="button" class="tg-chip" onclick="filterCards('Beach', this)">🏖️ Beach</button>
+                    <button type="button" class="tg-chip" onclick="filterCards('Mountains', this)">🏔️ Mountains</button>
+                    <button type="button" class="tg-chip" onclick="filterCards('City', this)">🏙️ Cities</button>
+                    <button type="button" class="tg-chip" onclick="filterCards('Nature', this)">🌿 Nature</button>
+                    <button type="button" class="tg-chip" onclick="filterCards('Culture', this)">🏛️ Culture</button>
+                    <button type="button" class="tg-chip" onclick="filterCards('Adventure', this)">🎡 Adventure</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Destination Grid -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4" id="destGrid">
+
+            @if (Model != null && Model.Any())
+            {
+                foreach (var dest in Model)
+                {
+                    // Tag heuristic
+                    var _tag = "General";
+                    var titleLower = (dest.Title + " " + dest.Destination).ToLower();
+                    if (titleLower.Contains("beach") || titleLower.Contains("goa") || titleLower.Contains("bali") || titleLower.Contains("amalfi") || titleLower.Contains("santorini")) _tag = "Beach";
+                    else if (titleLower.Contains("mount") || titleLower.Contains("alps") || titleLower.Contains("manali") || titleLower.Contains("patagonia") || titleLower.Contains("himal")) _tag = "Mountains";
+                    else if (titleLower.Contains("city") || titleLower.Contains("new york") || titleLower.Contains("dubai") || titleLower.Contains("paris")) _tag = "City";
+                    else if (titleLower.Contains("safari") || titleLower.Contains("amazon") || titleLower.Contains("serengeti")) _tag = "Nature";
+                    else if (titleLower.Contains("machu") || titleLower.Contains("kyoto") || titleLower.Contains("culture") || titleLower.Contains("temple")) _tag = "Culture";
+                    else if (titleLower.Contains("adventure") || titleLower.Contains("trek") || titleLower.Contains("rafting")) _tag = "Adventure";
+
+                    // Color by tag
+                    var _color = _tag switch
+                    {
+                        "Beach" => "#0099cc",
+                        "Mountains" => "#2f9e44",
+                        "City" => "#1971c2",
+                        "Nature" => "#2f9e44",
+                        "Culture" => "#e03131",
+                        "Adventure" => "#e67700",
+                        _ => "#1971c2"
+                    };
+
+                    <div class="col-lg-4 col-md-6 dest-card-col" data-tag="@_tag" data-name="@dest.Title @dest.Destination">
+                        <div class="tg-explore-card">
+                            <div class="tg-ec-img-wrapper">
+                                <img src="@(string.IsNullOrEmpty(dest.ImageUrl) ? "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop" : dest.ImageUrl)"
+                                     alt="@dest.Title" class="tg-ec-img" loading="lazy" />
+
+                                <div class="tg-ec-tag" style="background-color:@_color">@_tag</div>
+
+                                <button class="tg-ec-save-btn" title="Save destination" data-trip-id="@dest.Id" onclick="saveHandler(this)">
+                                    <i class="bi bi-bookmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="tg-ec-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="tg-ec-name mb-0">@dest.Title</h5>
+                                        <span class="tg-ec-country"><i class="bi bi-geo-alt-fill"></i> @dest.Destination</span>
+                                    </div>
+                                    <div class="tg-ec-rating">
+                                        <i class="bi bi-star-fill"></i> 4.8
+                                    </div>
+                                </div>
+
+                                <p class="tg-ec-desc">@(string.IsNullOrEmpty(dest.Description) ? "A beautiful destination waiting for you." : dest.Description)</p>
+
+                                <div class="tg-ec-footer d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="tg-ec-label">Starting from</span>
+                                        <span class="tg-ec-price">₹@dest.Price.ToString("N0")</span>
+                                    </div>
+
+                                    <a asp-controller="Home" asp-action="PlanTrip" asp-route-id="@dest.Id" class="btn tg-btn-sm-primary outline">
+                                        View & Plan
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No destinations available at the moment. Check back soon!</p>
+                </div>
+            }
+
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="text-center py-5 d-none">
+            <i class="bi bi-search" style="font-size:3rem; color: var(--tg-border);"></i>
+            <h5 class="mt-3" style="color: var(--tg-text-light);">No destinations found</h5>
+            <p style="color: var(--tg-text-light);">Try a different search or filter.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Login Prompt Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content tg-modal-content">
+            <div class="modal-body text-center p-4">
+                <button type="button" class="btn-close position-absolute" style="top:14px;right:14px;" data-bs-dismiss="modal"></button>
+                <div class="tg-modal-icon mb-3"><i class="bi bi-bookmark-heart-fill"></i></div>
+                <h5 class="fw-bold mb-2">Sign in to Save Destinations</h5>
+                <p class="text-muted mb-4">Create a free account to save your favourite places and plan amazing trips.</p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a asp-controller="Account" asp-action="Login" class="btn tg-btn-primary px-4">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </a>
+                    <a asp-controller="Account" asp-action="Register" class="btn tg-btn-outline px-4">
+                        <i class="bi bi-person-plus"></i> Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+
+@section Scripts {
+    <script>
+        function getRequestVerificationToken() {
+            var input = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]');
+            return input ? input.value : null;
+        }
+
+        function filterCards(tag, btn) {
+            document.querySelectorAll('.tg-chip').forEach(c => c.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            const cols = document.querySelectorAll('.dest-card-col');
+            let visible = 0;
+            cols.forEach(col => {
+                const match = tag === 'All' || col.dataset.tag === tag;
+                col.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+            document.getElementById('noResults').classList.toggle('d-none', visible > 0);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var search = document.getElementById('destSearch');
+            if (search) {
+                search.addEventListener('input', function () {
+                    const q = this.value.toLowerCase();
+                    const cols = document.querySelectorAll('.dest-card-col');
+                    let visible = 0;
+                    cols.forEach(col => {
+                        const match = col.dataset.name.toLowerCase().includes(q);
+                        col.style.display = match ? '' : 'none';
+                        if (match) visible++;
+                    });
+                    document.getElementById('noResults').classList.toggle('d-none', visible > 0);
+                });
+            }
+        });
+
+        async function saveHandler(btn) {
+            var tripId = btn.getAttribute('data-trip-id');
+            if (!tripId) return;
+            try {
+                const token = getRequestVerificationToken();
+                const form = new FormData();
+                form.append('id', tripId);
+                if (token) form.append('__RequestVerificationToken', token);
+
+                const resp = await fetch('@Url.Action("SaveTrip", "Home")', {
+                    method: 'POST',
+                    body: form,
+                    credentials: 'same-origin'
+                });
+
+                if (resp.status === 401) {
+                    new bootstrap.Modal(document.getElementById('loginModal')).show();
+                    return;
+                }
+
+                const json = await resp.json();
+                if (json && json.success) {
+                    btn.classList.add('saved');
+                    btn.disabled = true;
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('bi-bookmark');
+                        icon.classList.add('bi-bookmark-fill');
+                    }
+                } else {
+                    console.warn('Save failed', json);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+}

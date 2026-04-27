@@ -1,0 +1,73 @@
+@model TripGenius.Models.Trip
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Trips";
+    ViewData["Title"] = "Edit Trip";
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Edit Trip</h2>
+            <p>Update travel package details</p>
+        </div>
+        <a asp-action="Trips" class="btn-secondary-action"><i class="fas fa-arrow-left"></i> Back to Trips</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-success-inline"><i class="fas fa-check-circle"></i> @TempData["Success"]</div>
+    }
+
+    <div class="card form-card">
+        <form asp-action="EditTrip" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Trip Title</label>
+                    <input asp-for="Title" class="form-control" placeholder="Enter trip title" />
+                    <span asp-validation-for="Title" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-location-dot"></i> Destination</label>
+                    <input asp-for="Destination" class="form-control" placeholder="Enter destination" />
+                    <span asp-validation-for="Destination" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-indian-rupee-sign"></i> Price ()</label>
+                    <input asp-for="Price" class="form-control" placeholder="Enter price" />
+                    <span asp-validation-for="Price" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-days"></i> Duration (Days)</label>
+                    <input asp-for="DurationDays" class="form-control" placeholder="Enter days" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Image URL</label>
+                    <input asp-for="ImageUrl" class="form-control" placeholder="Paste image URL" />
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-toggle-on"></i> Status</label>
+                    <select asp-for="Status" class="form-control">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group full-width">
+                <label><i class="fas fa-align-left"></i> Description</label>
+                <textarea asp-for="Description" rows="4" class="form-control" placeholder="Write trip details..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary-action"><i class="fas fa-save"></i> Update Trip</button>
+                <a asp-action="Trips" class="btn-secondary-action">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+
+

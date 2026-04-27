@@ -1,0 +1,14 @@
+@{
+    ViewData["Title"] = "Delete Account";
+}
+
+<div class="container py-5">
+    <h2>Delete Account</h2>
+    <p>This will permanently delete your account and data. This action cannot be undone.</p>
+
+    <form method="post" asp-action="DeleteConfirmed">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-danger">Yes, delete my account</button>
+        <a asp-action="Settings" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>

@@ -1,0 +1,121 @@
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActivePage"] = "Notifications";
+    ViewData["Title"] = "Notifications";
+
+    var pendingBookings = ViewBag.PendingBookings as List<TripGenius.Models.Booking> ?? new List<TripGenius.Models.Booking>();
+    var pendingReviews  = ViewBag.PendingReviews  as List<TripGenius.Models.Review>  ?? new List<TripGenius.Models.Review>();
+    var newUsers        = ViewBag.NewUsers         as List<TripGenius.Models.User>    ?? new List<TripGenius.Models.User>();
+
+    int total = pendingBookings.Count + pendingReviews.Count + newUsers.Count;
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <h2>Notifications</h2>
+            <p>@total pending item(s) require your attention</p>
+        </div>
+        <a asp-controller="Admin" asp-action="Dashboard" class="btn-secondary-action">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- PENDING BOOKINGS -->
+    @if (pendingBookings.Any())
+    {
+        <div class="card notif-section">
+            <div class="card-head">
+                <h3><i class="fas fa-calendar-check notif-icon-booking"></i> Pending Bookings</h3>
+                <a asp-controller="Admin" asp-action="Bookings" asp-route-status="Pending" class="view-all-link">View All</a>
+            </div>
+            @foreach (var b in pendingBookings)
+            {
+                <div class="notif-item">
+                    <div class="notif-icon-wrap booking"><i class="fas fa-calendar-plus"></i></div>
+                    <div class="notif-body">
+                        <strong>New Booking  @b.Trip?.Title</strong>
+                        <p>@b.User?.Name booked for @b.NumberOfPeople person(s)  @b.TotalAmount.ToString("N0")</p>
+                        <span class="notif-time"><i class="fas fa-clock"></i> @b.BookingDate.ToString("MMM dd, yyyy hh:mm tt")</span>
+                    </div>
+                    <form asp-controller="Admin" asp-action="UpdateBookingStatus" method="post" style="display:flex;gap:6px;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@b.Id" />
+                        <input type="hidden" name="status" value="Confirmed" />
+                        <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Confirm</button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- PENDING REVIEWS -->
+    @if (pendingReviews.Any())
+    {
+        <div class="card notif-section">
+            <div class="card-head">
+                <h3><i class="fas fa-star notif-icon-review"></i> Pending Reviews</h3>
+                <a asp-controller="Admin" asp-action="Reviews" asp-route-status="Pending" class="view-all-link">View All</a>
+            </div>
+            @foreach (var r in pendingReviews)
+            {
+                <div class="notif-item">
+                    <div class="notif-icon-wrap review"><i class="fas fa-star"></i></div>
+                    <div class="notif-body">
+                        <strong>Review on @r.Trip?.Title</strong>
+                        <p>@r.User?.Name rated @r.Rating/5  "@(r.Comment?.Length > 80 ? r.Comment.Substring(0, 80)+"" : r.Comment)"</p>
+                        <span class="notif-time"><i class="fas fa-clock"></i> @r.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <form asp-controller="Admin" asp-action="ApproveReview" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Approve</button>
+                        </form>
+                        <form asp-controller="Admin" asp-action="FlagReview" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <button type="submit" class="btn-flag"><i class="fas fa-flag"></i> Flag</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- NEW USERS -->
+    @if (newUsers.Any())
+    {
+        <div class="card notif-section">
+            <div class="card-head">
+                <h3><i class="fas fa-user-plus notif-icon-user"></i> Recent Registrations</h3>
+                <a asp-controller="Admin" asp-action="Users" class="view-all-link">View All</a>
+            </div>
+            @foreach (var u in newUsers)
+            {
+                <div class="notif-item">
+                    <div class="notif-icon-wrap user"><i class="fas fa-user-plus"></i></div>
+                    <div class="notif-body">
+                        <strong>@u.Name registered</strong>
+                        <p>@u.Email  Role: @u.Role</p>
+                        <span class="notif-time"><i class="fas fa-clock"></i> @u.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!pendingBookings.Any() && !pendingReviews.Any() && !newUsers.Any())
+    {
+        <div class="card">
+            <div class="empty-state-box">
+                <i class="fas fa-bell-slash"></i>
+                <h3>All Caught Up!</h3>
+                <p>No pending notifications at the moment.</p>
+            </div>
+        </div>
+    }
+</div>
+
+
+

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "Admin Panel") - TripGenius</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body>
+<div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+            <div class="logo-circle"><i class="fas fa-leaf"></i></div>
+            <div>
+                <h2>TripGenius</h2>
+                <span>Admin Panel</span>
+            </div>
+        </div>
+
+        <nav class="admin-menu">
+            @{
+                var activePage = (ViewData["ActivePage"] as string) ?? string.Empty;
+                Func<string, bool> isActive = (page) => string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
+            }
+            <a asp-controller="Admin" asp-action="Dashboard" class="admin-link @(isActive("Dashboard") ? "active" : "")">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a asp-controller="Admin" asp-action="Users" class="admin-link @(isActive("Users") ? "active" : "")">
+                <i class="fas fa-users"></i> User Management
+            </a>
+            <a asp-controller="Admin" asp-action="Trips" class="admin-link @(isActive("Trips") ? "active" : "")">
+                <i class="fas fa-map-marked-alt"></i> Trip Management
+            </a>
+            <a asp-controller="Admin" asp-action="Bookings" class="admin-link @(isActive("Bookings") ? "active" : "")">
+                <i class="fas fa-calendar-check"></i> Bookings
+            </a>
+            <a asp-controller="Admin" asp-action="Payments" class="admin-link @(isActive("Payments") ? "active" : "")">
+                <i class="fas fa-credit-card"></i> Payments
+            </a>
+            <a asp-controller="Admin" asp-action="Reviews" class="admin-link @(isActive("Reviews") ? "active" : "")">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+            <a asp-controller="Admin" asp-action="SearchAnalytics" class="admin-link @(isActive("SearchAnalytics") ? "active" : "")">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </a>
+
+            <div class="sidebar-divider"></div>
+
+            <a asp-controller="Admin" asp-action="Settings" class="admin-link @(isActive("Settings") ? "active" : "")">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="sidebar-logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay" onclick="toggleSidebar(false)"></div>
+
+    <!-- MAIN -->
+    <div class="admin-main">
+
+        <!-- NAVBAR -->
+        <header class="admin-navbar">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="navbar-search">
+                <form asp-controller="Admin" asp-action="Search" method="get" class="search-form">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="query" placeholder="Search users, trips, bookings..." />
+                    <button type="submit" class="search-submit">Search</button>
+                </form>
+            </div>
+
+            <div class="navbar-right">
+                <a asp-controller="Admin" asp-action="Notifications" class="notif-btn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    @{
+                        var notifCount = (int)(ViewBag.PendingNotifications ?? 0);
+                    }
+                    @if (notifCount > 0)
+                    {
+                        <span class="badge-count">@(notifCount > 9 ? "9+" : notifCount.ToString())</span>
+                    }
+                </a>
+
+                <div class="navbar-user-wrapper" id="navbarUserWrapper">
+                    <button class="navbar-user" id="navbarUserBtn" type="button">
+                        <div class="user-avatar">@(ViewBag.AdminInitial ?? "A")</div>
+                        <div class="user-info">
+                            <strong>@(ViewBag.AdminName ?? "Admin User")</strong>
+                            <span>@(ViewBag.AdminEmail ?? "admin@travel.com")</span>
+                        </div>
+                        <i class="fas fa-chevron-down user-caret"></i>
+                    </button>
+
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <div class="user-avatar large">@(ViewBag.AdminInitial ?? "A")</div>
+                            <div>
+                                <strong>@(ViewBag.AdminName ?? "Admin User")</strong>
+                                <span>@(ViewBag.AdminEmail ?? "admin@travel.com")</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-list">
+                            <a asp-controller="Admin" asp-action="Profile" class="dropdown-item">
+                                <i class="fas fa-user-circle"></i> My Profile
+                            </a>
+                            <a asp-controller="Admin" asp-action="ChangePassword" class="dropdown-item">
+                                <i class="fas fa-key"></i> Change Password
+                            </a>
+                            <a asp-controller="Admin" asp-action="Settings" class="dropdown-item">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item logout">
+                                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SUCCESS TOAST -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="toast-container" id="toastContainer">
+                <div class="toast-msg toast-success" id="toastMsg">
+                    <i class="fas fa-check-circle"></i>
+                    <span>@TempData["Success"]</span>
+                    <button onclick="document.getElementById('toastContainer').remove()">&times;</button>
+                </div>
+            </div>
+        }
+
+        <!-- CONTENT -->
+        <main class="admin-content">
+            @RenderBody()
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+@RenderSection("Scripts", required: false)
+
+<script>
+// SIDEBAR 
+const sidebar = document.getElementById('adminSidebar');
+const overlay = document.getElementById('adminSidebarOverlay');
+const mobileBtn = document.getElementById('mobileMenuBtn');
+
+function toggleSidebar(open) {
+    if (open === undefined) open = !sidebar.classList.contains('open');
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('show', open);
+    document.body.classList.toggle('admin-mobile-menu-open', open);
+}
+if (mobileBtn) mobileBtn.addEventListener('click', () => toggleSidebar());
+
+// USER DROPDOWN 
+const navBtn = document.getElementById('navbarUserBtn');
+const userDrop = document.getElementById('userDropdown');
+const userWrap = document.getElementById('navbarUserWrapper');
+
+function setDropdown(open) {
+    userDrop?.classList.toggle('open', open);
+}
+if (navBtn) {
+    navBtn.addEventListener('click', e => { e.stopPropagation(); setDropdown(!userDrop.classList.contains('open')); });
+}
+document.addEventListener('click', e => { if (userWrap && !userWrap.contains(e.target)) setDropdown(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setDropdown(false); });
+
+// TOAST Auto HIDE 
+const toast = document.getElementById('toastContainer');
+if (toast) setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 4000);
+
+// DASHBOARD CHARTS 
+const lineCtx = document.getElementById('lineChart');
+if (lineCtx && typeof chartMonths !== 'undefined' && typeof chartRevenue !== 'undefined') {
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: chartMonths,
+            datasets: [
+                {
+                    label: 'Revenue (₹)',
+                    data: chartRevenue,
+                    borderColor: '#5a8a00',
+                    backgroundColor: 'rgba(90, 138, 0, 0.08)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#5a8a00',
+                    pointRadius: 4
+                },
+                {
+                    label: 'Bookings',
+                    data: chartBookings,
+                    borderColor: '#ffa726',
+                    backgroundColor: 'rgba(255, 167, 38, 0.08)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#ffa726',
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+const pieCtx = document.getElementById('pieChart');
+if (pieCtx && typeof catLabels !== 'undefined' && typeof catData !== 'undefined') {
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: catLabels,
+            datasets: [{
+                data: catData,
+                backgroundColor: ['#5a8a00', '#ffa726', '#7bb800', '#3d6200'],
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            cutout: '62%'
+        }
+    });
+}
+
+// PAYMENT CHART 
+const payCtx = document.getElementById('paymentChart');
+if (payCtx && typeof payMonths !== 'undefined' && typeof payData !== 'undefined') {
+    new Chart(payCtx, {
+        type: 'bar',
+        data: {
+            labels: payMonths,
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: payData,
+                backgroundColor: 'rgba(90, 138, 0, 0.75)',
+                borderColor: '#5a8a00',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+</script>
+
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,152 @@
+@{
+    ViewData["Title"] = "Sign In";
+}
+
+<section class="tg-auth-section">
+    <div class="container">
+        <div class="row justify-content-center align-items-center" style="min-height: calc(100vh - 140px);">
+            <div class="col-xl-10 col-lg-11">
+                <div class="tg-auth-card">
+
+                    <!-- Left decorative panel -->
+                    <div class="tg-auth-left">
+                        <div class="tg-auth-left-inner">
+                            <div class="tg-auth-brand">
+                                <i class="bi bi-compass-fill"></i>
+                                <span>TripGenius</span>
+                            </div>
+                            <h2 class="tg-auth-left-title">Welcome Back, Explorer!</h2>
+                            <p class="tg-auth-left-sub">Sign in to continue your journey and pick up right where you left off.</p>
+
+                            <div class="tg-auth-perks">
+                                <div class="tg-perk-item">
+                                    <i class="bi bi-bookmark-heart-fill"></i>
+                                    <span>Access your saved trips instantly</span>
+                                </div>
+                                <div class="tg-perk-item">
+                                    <i class="bi bi-map-fill"></i>
+                                    <span>Continue planning your adventures</span>
+                                </div>
+                                <div class="tg-perk-item">
+                                    <i class="bi bi-bell-fill"></i>
+                                    <span>Get personalised travel deals</span>
+                                </div>
+                            </div>
+
+                            <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=500&h=260&fit=crop"
+                                 class="tg-auth-left-img mt-auto" alt="Travel" />
+                        </div>
+                    </div>
+
+                    <!-- Right form panel -->
+                    <div class="tg-auth-right">
+                        <div class="tg-auth-right-inner">
+                            <h3 class="tg-auth-title">Sign In</h3>
+                            <p class="tg-auth-subtitle">
+                                Don't have an account?
+                                <a asp-controller="Account" asp-action="Register" class="tg-auth-link">Create one free</a>
+                            </p>
+
+                            @* Show success message after registration *@
+                            @if (TempData["Success"] != null)
+                            {
+                                <div class="alert alert-success">@TempData["Success"]</div>
+                            }
+
+                            @* Show model validation summary from server using Html helper to avoid TagHelper expression trees *@
+                            @Html.ValidationSummary(true, "", new { @class = "text-danger mb-3" })
+
+                            <form asp-controller="Account" asp-action="Login" method="post" id="loginForm">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                                <div class="tg-auth-field">
+                                    <label class="tg-form-label">Email Address</label>
+                                    <div class="tg-input-group">
+                                        <i class="bi bi-envelope tg-input-icon"></i>
+                                        <input type="email" name="email" id="loginEmail"
+                                               class="tg-form-input w-100"
+                                               placeholder="you@example.com"
+                                               required autocomplete="email" />
+                                    </div>
+                                    @Html.ValidationMessage("email", "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="tg-auth-field">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="tg-form-label">Password</label>
+                                        <a asp-controller="Home" asp-action="ForgotPassword" class="tg-forgot-link">Forgot password?</a>
+                                    </div>
+                                    <div class="tg-input-group">
+                                        <i class="bi bi-lock tg-input-icon"></i>
+                                        <input type="password" name="password" id="loginPassword"
+                                               class="tg-form-input w-100"
+                                               placeholder="Enter your password"
+                                               required autocomplete="current-password" />
+                                        <button type="button" class="tg-pw-toggle" onclick="togglePw('loginPassword', this)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    @Html.ValidationMessage("password", "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2 mb-4">
+                                    <input type="checkbox" id="rememberMe" name="rememberMe" class="tg-checkbox" />
+                                    <label for="rememberMe" class="tg-check-label">Remember me for 30 days</label>
+                                </div>
+
+                                <button type="submit" class="btn tg-btn-auth-submit w-100">
+                                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                                </button>
+                            </form>
+
+                            <p class="tg-auth-bottom-note">
+                                New to TripGenius?
+                                <a asp-controller="Account" asp-action="Register" class="tg-auth-link">Create a free account</a>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <text>
+    <script>
+    function togglePw(id, btn) {
+        const inp = document.getElementById(id);
+        const ico = btn.querySelector('i');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        ico.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    }
+
+    // Optional: basic client-side validation before submit
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+        const email = document.getElementById('loginEmail');
+        const pass  = document.getElementById('loginPassword');
+        const atChar = String.fromCharCode(64);
+        const emailRegex = new RegExp("\\S+" + atChar + "\\S+\\.\\S+");
+        if (!email.value || !emailRegex.test(email.value) || !pass.value) {
+            // Let server show errors too; prevent submit only to show minimal client feedback
+            // Do not block submission entirely; allow server validation as fallback
+            if (!email.value || !emailRegex.test(email.value)) {
+                email.classList.add('is-invalid');
+            } else {
+                email.classList.remove('is-invalid');
+            }
+            if (!pass.value) {
+                pass.classList.add('is-invalid');
+            } else {
+                pass.classList.remove('is-invalid');
+            }
+        }
+    });
+    </script>
+    </text>
+}
+
+
+
