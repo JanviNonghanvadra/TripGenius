@@ -17,7 +17,7 @@
                     <input type="text" id="destSearch" class="form-control tg-exp-search-input" placeholder="Search destinations, countries, experiences..." />
                 </div>
                 <div class="tg-filter-chips">
-                    <button type="button" class="tg-chip active" onclick="filterCards('All', this)" aria-label="All destinations">?? All</button>
+                    <button type="button" class="tg-chip active" onclick="filterCards('All', this)" aria-label="All destinations">All</button>
                     <button type="button" class="tg-chip" onclick="filterCards('Beach', this)" aria-label="Beach destinations">??? Beach</button>
                     <button type="button" class="tg-chip" onclick="filterCards('Mountains', this)" aria-label="Mountain destinations">??? Mountains</button>
                     <button type="button" class="tg-chip" onclick="filterCards('City', this)" aria-label="City destinations">??? Cities</button>
@@ -95,7 +95,7 @@
                                                 if (i <= rounded) { <i class="bi bi-star-fill"></i>; }
                                                 else { <i class="bi bi-star"></i>; }
                                             }
-                                            <span class="ms-1">?</span>
+                                            <span class="ms-1">@reviewsCount</span>
                                         }
                                         else
                                         {
@@ -112,7 +112,7 @@
                                         <span class="tg-ec-price">? @dest.Price.ToString("N0")</span>
                                     </div>
 
-                                    <a asp-controller="RegisterUser" asp-action="PlanTrip" asp-route-id="@dest.Id" class="btn tg-btn-sm-primary outline" title="Plan trip to @dest.Title">? Plan Trip</a>
+                                    <a asp-controller="RegisterUser" asp-action="PlanTrip" asp-route-id="@dest.Id" class="btn tg-btn-sm-primary outline" title="Plan trip to @dest.Title">?? Plan Trip</a>
                                 </div>
                             </div>
                         </div>
