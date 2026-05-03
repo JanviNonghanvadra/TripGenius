@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using MailKit.Net.Smtp;
+using TripGenius.Services;
 
 namespace TripGenius.Controllers
 {
@@ -14,11 +15,16 @@ namespace TripGenius.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<HomeController> _logger;
+        private readonly EmailService _emailService;
 
-        public HomeController(ApplicationDbContext context, ILogger<HomeController> logger)
+        public HomeController(
+            ApplicationDbContext context,
+            ILogger<HomeController> logger,
+            EmailService emailService)
         {
             _context = context;
             _logger = logger;
+            _emailService = emailService;
         }
 
         // Guest Landing Page
@@ -75,7 +81,7 @@ namespace TripGenius.Controllers
             return View();
         }
 
-        // Forgot Password - POST
+        /*// Forgot Password - POST
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForgotPassword(string email)
@@ -128,9 +134,73 @@ namespace TripGenius.Controllers
                 TempData["ForgotEmail"] = email;
             }
             return RedirectToAction("ForgotPasswordConfirmation");
+        }*/
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            if (!string.IsNullOrEmpty(email))
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user != null)
+                {
+                    // ?? Remove old tokens (IMPORTANT)
+                    var oldTokens = _context.PasswordResets.Where(p => p.UserId == user.Id);
+                    _context.PasswordResets.RemoveRange(oldTokens);
+
+                    // ?? Generate new token
+                    var token = Guid.NewGuid().ToString("N");
+
+                    var pr = new PasswordReset
+                    {
+                        UserId = user.Id,
+                        Token = token,
+                        ExpiresAt = DateTime.UtcNow.AddHours(1),
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.PasswordResets.Add(pr);
+                    await _context.SaveChangesAsync();
+
+                    // ?? Create reset link
+                    var resetUrl = Url.Action(
+                        "ResetPassword",
+                        "Home",
+                        new { token = token, email = user.Email },
+                        protocol: "https"
+                    );
+
+                    // ?? Email body
+                    var body = $@"
+                <h3>Reset Password</h3>
+                <p>Hello {user.Name},</p>
+                <p>Click below to reset your password:</p>
+                <a href='{resetUrl}' style='padding:10px;background:#007bff;color:white;text-decoration:none;'>
+                    Reset Password
+                </a>
+                <p>This link expires in 1 hour.</p>
+                <p>If you didn't request this, ignore this email.</p>
+            ";
+
+                    try
+                    {
+                        await _emailService.SendEmailAsync(user.Email, "Reset Password", body);
+                        _logger.LogInformation("Reset email sent to {email}", user.Email);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error sending reset email");
+                    }
+                }
+
+                TempData["ForgotEmail"] = email;
+            }
+
+            return RedirectToAction("ForgotPasswordConfirmation");
         }
 
-        [HttpGet]
+        /*[HttpGet]
         public async Task<IActionResult> ResetPassword(string token, string email)
         {
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email)) return RedirectToAction("ForgotPassword");
@@ -138,24 +208,84 @@ namespace TripGenius.Controllers
             if (pr == null) { TempData["Error"] = "Invalid or expired token."; return RedirectToAction("ForgotPassword"); }
             var vm = new ResetPasswordViewModel { Token = token, Email = email };
             return View(vm);
-        }
+        }*/
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+                return RedirectToAction("ForgotPassword");
 
+            var pr = await _context.PasswordResets
+                .FirstOrDefaultAsync(p => p.Token == token && p.ExpiresAt > DateTime.UtcNow);
+
+            if (pr == null)
+            {
+                TempData["Error"] = "Invalid or expired token.";
+                return RedirectToAction("ForgotPassword");
+            }
+
+            return View(new ResetPasswordViewModel
+            {
+                Token = token,
+                Email = email
+            });
+        }
+        /*
+                [HttpPost]
+                [ValidateAntiForgeryToken]
+                public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+                {
+                    if (!ModelState.IsValid) return View(model);
+                    var pr = await _context.PasswordResets.FirstOrDefaultAsync(p => p.Token == model.Token && p.ExpiresAt > DateTime.UtcNow);
+                    if (pr == null) { ModelState.AddModelError("", "Invalid or expired token."); return View(model); }
+                    var user = await _context.Users.FindAsync(pr.UserId);
+                    if (user == null) { ModelState.AddModelError("", "User not found."); return View(model); }
+
+                    var hasher = new PasswordHasher<User>();
+                    user.PasswordHash = hasher.HashPassword(user, model.NewPassword);
+                    _context.PasswordResets.Remove(pr);
+                    await _context.SaveChangesAsync();
+
+                    TempData["Success"] = "Password updated. Please sign in.";
+                    return RedirectToAction("Login", "Account");
+                }*/
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
-            var pr = await _context.PasswordResets.FirstOrDefaultAsync(p => p.Token == model.Token && p.ExpiresAt > DateTime.UtcNow);
-            if (pr == null) { ModelState.AddModelError("", "Invalid or expired token."); return View(model); }
-            var user = await _context.Users.FindAsync(pr.UserId);
-            if (user == null) { ModelState.AddModelError("", "User not found."); return View(model); }
+            if (!ModelState.IsValid)
+                return View(model);
 
+            var pr = await _context.PasswordResets
+                .FirstOrDefaultAsync(p => p.Token == model.Token && p.ExpiresAt > DateTime.UtcNow);
+
+            if (pr == null)
+            {
+                ModelState.AddModelError("", "Invalid or expired token.");
+                return View(model);
+            }
+
+            // ?? Validate user with BOTH Id + Email (IMPORTANT FIX)
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == pr.UserId && u.Email == model.Email);
+
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Invalid request.");
+                return View(model);
+            }
+
+            // ?? Hash password
             var hasher = new PasswordHasher<User>();
             user.PasswordHash = hasher.HashPassword(user, model.NewPassword);
+
+            // ? Remove token after use
             _context.PasswordResets.Remove(pr);
+
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Password updated. Please sign in.";
+            TempData["Success"] = "Password updated successfully.";
+
             return RedirectToAction("Login", "Account");
         }
 

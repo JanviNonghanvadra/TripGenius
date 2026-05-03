@@ -63,7 +63,7 @@
                                         <label class="tg-type-option">
                                             <input type="radio" name="tripType" value="Mountains" />
                                             <div class="tg-type-card">
-                                                <span class="tg-type-emoji">???</span>
+                                                <span class="tg-type-emoji">??</span>
                                                 <span>Mountains</span>
                                             </div>
                                         </label>
@@ -184,110 +184,115 @@
 </div>
 
 @section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('planForm');
-    const dep = document.getElementById('depDate');
-    const ret = document.getElementById('retDate');
-    const dur = document.getElementById('duration');
-    const dest = document.getElementById('destination');
-    const travelers = document.getElementById('travelers');
-    const budget = document.getElementById('budget');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('planForm');
+            const dep = document.getElementById('depDate');
+            const ret = document.getElementById('retDate');
+            const dur = document.getElementById('duration');
+            const dest = document.getElementById('destination');
+            const travelers = document.getElementById('travelers');
+            const budget = document.getElementById('budget');
 
-    // helper error handlers
-    function showError(elId, msg) {
-        const el = document.getElementById(elId);
-        if (el) { el.textContent = msg; el.classList.remove('d-none'); }
-    }
-    function clearError(elId) { const el = document.getElementById(elId); if (el) el.classList.add('d-none'); }
+            // helper error handlers
+            function showError(elId, msg) {
+                const el = document.getElementById(elId);
+                if (el) { el.textContent = msg; el.classList.remove('d-none'); }
+            }
+            function clearError(elId) { const el = document.getElementById(elId); if (el) el.classList.add('d-none'); }
 
-    // set min date to today
-    const today = new Date().toISOString().split('T')[0];
-    if (dep) dep.min = today;
-    if (ret) ret.min = today;
+            // set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            if (dep) dep.min = today;
+            if (ret) ret.min = today;
 
-    // calculate duration if duration field exists
-    function calcDuration() {
-        if (!dep || !ret) return;
-        const d1 = dep.value ? new Date(dep.value) : null;
-        const d2 = ret.value ? new Date(ret.value) : null;
-        if (d1 && d2) {
-            const nights = Math.round((d2 - d1) / 86400000);
-            // write to a readonly field if present
-            const durationEl = document.getElementById('duration');
-            if (durationEl) durationEl.value = nights > 0 ? nights + ' night' + (nights > 1 ? 's' : '') : 'Invalid dates';
-        }
-    }
-    if (dep) dep.addEventListener('change', calcDuration);
-    if (ret) ret.addEventListener('change', calcDuration);
+            // calculate duration if duration field exists
+            function calcDuration() {
+                if (!dep || !ret) return;
+                const d1 = dep.value ? new Date(dep.value) : null;
+                const d2 = ret.value ? new Date(ret.value) : null;
+                if (d1 && d2) {
+                    const nights = Math.round((d2 - d1) / 86400000);
+                    // write to a readonly field if present
+                    const durationEl = document.getElementById('duration');
+                    if (durationEl) durationEl.value = nights > 0 ? nights + ' night' + (nights > 1 ? 's' : '') : 'Invalid dates';
+                }
+            }
+            if (dep) dep.addEventListener('change', calcDuration);
+            if (ret) ret.addEventListener('change', calcDuration);
 
-    // clear field errors on input
-    ['destination','depDate','retDate','travelers','budget'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('input', function () {
-            clearError(id === 'depDate' ? 'depErr' : id === 'retDate' ? 'retErr' : id === 'travelers' ? 'travErr' : id === 'budget' ? 'budgetErr' : 'destErr');
+            // clear field errors on input
+            ['destination', 'depDate', 'retDate', 'travelers', 'budget'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', function () {
+                    clearError(id === 'depDate' ? 'depErr' : id === 'retDate' ? 'retErr' : id === 'travelers' ? 'travErr' : id === 'budget' ? 'budgetErr' : 'destErr');
+                });
+            });
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const destVal = dest.value.trim();
+                const depVal = dep.value;
+                const retVal = ret.value;
+                const travVal = parseInt(travelers.value);
+                const budVal = budget.value ? parseFloat(budget.value) : 0;
+
+                // ? Basic validation
+                if (!destVal) {
+                    alert("Enter destination");
+                    return;
+                }
+
+                if (!depVal || !retVal) {
+                    alert("Select dates");
+                    return;
+                }
+
+                if (travVal < 1) {
+                    alert("Invalid travelers");
+                    return;
+                }
+
+                try {
+                    // ? CALL BACKEND API
+                    const res = await fetch('/RegisterUser/SubmitBooking', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            destination: destVal,
+                            departureDate: depVal,
+                            returnDate: retVal,
+                            travelers: travVal,
+                            budget: budVal
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        // ? REDIRECT TO PAYMENT PAGE
+                        window.location.href = `/RegisterUser/Payment?bookingId=${data.bookingId}`;
+                    } else {
+                        alert("Booking failed ?");
+                    }
+                }
+                catch (err) {
+                    console.error(err);
+                    alert("Server error ?");
+                }
+            });
         });
-    });
 
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        let valid = true;
-
-        // destination
-        if (!dest || !dest.value.trim()) { showError('destErr','Please enter a destination.'); valid = false; }
-        else clearError('destErr');
-
-        // dates
-        const depVal = dep ? dep.value : '';
-        const retVal = ret ? ret.value : '';
-        if (!depVal) { showError('depErr','Please select departure date.'); valid = false; }
-        else clearError('depErr');
-        if (!retVal) { showError('retErr','Please select return date.'); valid = false; }
-        else clearError('retErr');
-
-        if (depVal && retVal) {
-            const d1 = new Date(depVal), d2 = new Date(retVal);
-            if (d2 <= d1) { showError('retErr','Return must be after departure.'); valid = false; }
-            else clearError('retErr');
+        function clearForm() {
+            const form = document.getElementById('planForm');
+            if (form) form.reset();
+            const durationEl = document.getElementById('duration'); if (durationEl) durationEl.value = '';
+            // hide all errors
+            ['destErr', 'depErr', 'retErr', 'travErr', 'budgetErr'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('d-none'); });
         }
-
-        // travelers
-        if (!travelers || !travelers.value || Number(travelers.value) < 1 || Number(travelers.value) > 50) {
-            showError('travErr','Please enter number of travelers (1-50).'); valid = false;
-        } else clearError('travErr');
-
-        // budget optional but if present must be positive
-        if (budget && budget.value) {
-            const b = Number(budget.value);
-            if (isNaN(b) || b < 0) { showError('budgetErr','Please enter a valid budget.'); valid = false; }
-            else clearError('budgetErr');
-        } else clearError('budgetErr');
-
-        if (!valid) {
-            // scroll to first error
-            const firstErr = document.querySelector('.tg-field-error:not(.d-none)');
-            if (firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
-            return;
-        }
-
-        // show success toast (demo): replace with server submit when available
-        const toast = document.getElementById('successToast');
-        if (toast) {
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 4000);
-        }
-
-        // Optionally clear form or save draft; here we keep values
-    });
-});
-
-function clearForm() {
-    const form = document.getElementById('planForm');
-    if (form) form.reset();
-    const durationEl = document.getElementById('duration'); if (durationEl) durationEl.value = '';
-    // hide all errors
-    ['destErr','depErr','retErr','travErr','budgetErr'].forEach(id => { const el=document.getElementById(id); if (el) el.classList.add('d-none'); });
-}
-</script>
+    </script>
 }

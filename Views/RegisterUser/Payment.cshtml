@@ -1,0 +1,82 @@
+﻿@model TripGenius.Models.Payment
+
+@{
+    ViewData["Title"] = "Payment";
+}
+
+<div class="container py-5">
+    <div class="card shadow p-4">
+        <h3 class="mb-4">Complete Your Payment</h3>
+
+        <form id="paymentForm">
+            <input type="hidden" id="bookingId" value="@ViewBag.BookingId" />
+
+            <div class="mb-3">
+                <label>Amount (₹)</label>
+                <input type="text" class="form-control" id="amount" value="@ViewBag.Amount" readonly />
+            </div>
+
+            <div class="mb-3">
+                <label>Select Payment Method</label>
+                <select id="method" class="form-control">
+                    <option value="UPI">UPI</option>
+                    <option value="Card">Card</option>
+                </select>
+            </div>
+
+            <!-- UPI -->
+            <div id="upiBox">
+                <input type="text" class="form-control" placeholder="Enter UPI ID (demo@upi)" />
+            </div>
+
+            <!-- Card -->
+            <div id="cardBox" class="d-none">
+                <input type="text" class="form-control mb-2" placeholder="Card Number" />
+                <input type="text" class="form-control mb-2" placeholder="MM/YY" />
+                <input type="text" class="form-control" placeholder="CVV" />
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3 w-100">
+                Pay Now
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById("method").addEventListener("change", function () {
+            let val = this.value;
+            document.getElementById("upiBox").classList.toggle("d-none", val !== "UPI");
+            document.getElementById("cardBox").classList.toggle("d-none", val !== "Card");
+        });
+
+        document.getElementById("paymentForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const data = {
+                bookingId: document.getElementById("bookingId").value,
+                amount: document.getElementById("amount").value,
+                paymentMethod: document.getElementById("method").value
+            };
+
+            // simulate delay (real feel)
+            await new Promise(r => setTimeout(r, 1500));
+
+            const res = await fetch('/RegisterUser/ProcessPayment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                alert("Payment Successful ✅");
+                window.location.href = "/RegisterUser/MyBookings";
+            } else {
+                alert("Payment Failed ❌");
+            }
+        });
+    </script>
+}

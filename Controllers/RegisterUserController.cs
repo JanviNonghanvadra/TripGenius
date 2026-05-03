@@ -448,6 +448,93 @@ namespace TripGenius.Controllers
             return RedirectToAction("Profile");
         }
 
+        [HttpGet]
+        public IActionResult Payment(int bookingId)
+        {
+            var booking = _context.Bookings
+                .Include(b => b.Trip)
+                .FirstOrDefault(b => b.Id == bookingId);
+
+            if (booking == null)
+                return NotFound();
+
+            ViewBag.BookingId = booking.Id;
+            ViewBag.Amount = booking.TotalAmount; // ? FIXED
+
+            return View();
+        }
+        /*
+                [HttpPost]
+                public async Task<IActionResult> ProcessPayment([FromBody] Payment model)
+                {
+                    try
+                    {
+                        // simulate success/failure (random)
+                        var rnd = new Random();
+                        bool isSuccess = rnd.Next(0, 100) > 10; // 90% success
+
+                        model.Status = isSuccess ? "Success" : "Failed";
+                        model.PaymentDate = DateTime.Now;
+
+                        _context.Payments.Add(model);
+                        await _context.SaveChangesAsync();
+
+                        return Json(new { success = isSuccess });
+                    }
+                    catch
+                    {
+                        return Json(new { success = false });
+                    }
+                }
+        */
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessPayment([FromBody] Payment model)
+        {
+            try
+            {
+                var booking = await _context.Bookings.FindAsync(model.BookingId);
+                if (booking == null)
+                    return Json(new { success = false });
+
+                // Simulate success
+                model.Status = "Success";
+                model.PaymentDate = DateTime.Now;
+
+                _context.Payments.Add(model);
+
+                // ? Update booking
+                booking.Status = "Confirmed";
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Payment failed");
+                return Json(new { success = false });
+            }
+        }
+        public async Task<IActionResult> MyBookings()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString))
+                return RedirectToAction("Login", "Account");
+
+            int userId = int.Parse(userIdString);
+
+            var bookings = await _context.Bookings
+                .Where(b => b.UserId == userId)
+                .Include(b => b.Trip) // ? VERY IMPORTANT
+                .OrderByDescending(b => b.BookingDate)
+                .ToListAsync();
+
+            return View(bookings);
+        }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccount()
@@ -594,6 +681,58 @@ namespace TripGenius.Controllers
         public async Task<IActionResult> SubmitBooking([FromBody] TripBookingDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Destination))
+                return BadRequest(new { success = false });
+
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            try
+            {
+                // 1. Create Trip
+                var trip = new Trip
+                {
+                    Title = "Trip to " + dto.Destination,
+                    Destination = dto.Destination,
+                    Price = dto.Budget,
+                    StartDate = dto.DepartureDate,
+                    EndDate = dto.ReturnDate,
+                    UserId = userId,
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Trips.Add(trip);
+                await _context.SaveChangesAsync();
+
+                // 2. Create Booking
+                var totalAmount = dto.Budget * dto.Travelers;
+
+                var booking = new Booking
+                {
+                    UserId = userId,
+                    TripId = trip.Id,
+                    NumberOfPeople = dto.Travelers,
+                    TotalAmount = totalAmount,
+                    Status = "Pending"
+                };
+
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    bookingId = booking.Id
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Booking failed");
+                return StatusCode(500, new { success = false });
+            }
+        }
+        /*[HttpPost]
+        public async Task<IActionResult> SubmitBooking([FromBody] TripBookingDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Destination))
                 return BadRequest(new { success = false, message = "Invalid data" });
 
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -666,7 +805,7 @@ namespace TripGenius.Controllers
                 _logger.LogError(ex, "Failed to submit booking workflow.");
                 return StatusCode(500, new { success = false, message = "Error processing payment and booking" });
             }
-        }
+        }*/
 
         // DTO for full plan submission from PlanTrip page
         public class PlanTripDto

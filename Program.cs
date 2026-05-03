@@ -2,12 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TripGenius.Data;
 using Microsoft.AspNetCore.Identity;
+using TripGenius.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+//for forgot password email
+builder.Services.AddTransient<EmailService>();
+
 
 // Unified cookie authentication
 builder.Services.AddAuthentication("TripGeniusCookie")
