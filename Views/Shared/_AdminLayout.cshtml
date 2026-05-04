@@ -42,9 +42,7 @@
             <a asp-controller="Admin" asp-action="Payments" class="admin-link @(isActive("Payments") ? "active" : "")">
                 <i class="fas fa-credit-card"></i> Payments
             </a>
-            <a asp-controller="Admin" asp-action="Reviews" class="admin-link @(isActive("Reviews") ? "active" : "")">
-                <i class="fas fa-star"></i> Reviews
-            </a>
+            
             <a asp-controller="Admin" asp-action="SearchAnalytics" class="admin-link @(isActive("SearchAnalytics") ? "active" : "")">
                 <i class="fas fa-chart-bar"></i> Analytics
             </a>
@@ -80,7 +78,7 @@
             <div class="navbar-search">
                 <form asp-controller="Admin" asp-action="Search" method="get" class="search-form">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" name="query" placeholder="Search users, trips, bookings..." />
+                    <input type="text" name="query" placeholder="Search trips..." />
                     <button type="submit" class="search-submit">Search</button>
                 </form>
             </div>

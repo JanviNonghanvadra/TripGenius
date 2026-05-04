@@ -10,133 +10,231 @@
 
 <style>
     /* Fixed-height table area to keep scrollbar stable */
-    .table-wrap { max-height: 420px; overflow-y: auto; }
-    .admin-table { width: 100%; border-collapse: collapse; }
-    .admin-table th, .admin-table td { padding: 12px 10px; border-bottom: 1px solid #eee; }
-    .stats-grid .stat-card { min-height: 80px; }
-    .pagination { display:flex; gap:8px; justify-content:center; margin-top:12px; }
-    .page-btn { padding:6px 10px; border-radius:4px; background:#f5f5f5; text-decoration:none; color:#333; }
-    .page-btn.active { background:#1971c2; color:#fff; }
-    .filter-bar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
-    .filter-bar .search-box input { width:260px; }
+    .table-wrap {
+        max-height: 420px;
+        overflow-y: auto;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .admin-table th, .admin-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+    .stats-grid .stat-card {
+        min-height: 80px;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+    }
+
+    .page-btn {
+        padding: 6px 10px;
+        border-radius: 4px;
+        background: #f5f5f5;
+        text-decoration: none;
+        color: #333;
+    }
+
+        .page-btn.active {
+            background: #1971c2;
+            color: #fff;
+        }
+
+    .filter-bar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+        .filter-bar .search-box input {
+            width: 260px;
+        }
+
+    .empty-td {
+        text-align: center;
+        padding: 28px 0;
+        color: #888;
+    }
+
+    .mini-select {
+        padding: 6px 8px;
+        border-radius: 6px;
+    }
+
+    .badge-status {
+        padding: 6px 8px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+        .badge-status.completed {
+            background: #dff0d8;
+            color: #2f8f2f;
+        }
+
+        .badge-status.pending {
+            background: #fff3cd;
+            color: #8a6d3b;
+        }
+
+        .badge-status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
 </style>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // DOM elements
-        const tableBody = document.querySelector('.table-wrap tbody') || document.querySelector('tbody');
-        const statsTotalRevenue = document.querySelector('.stats-grid .stat-card:nth-child(1) h3');
-        const statsTotalTx = document.querySelector('.stats-grid .stat-card:nth-child(2) h3');
-        const statsPending = document.querySelector('.stats-grid .stat-card:nth-child(3) h3');
-        const statsFailed = document.querySelector('.stats-grid .stat-card:nth-child(4) h3');
-        const paginationEl = document.querySelector('.pagination');
-        const paymentChartEl = document.getElementById('paymentChart');
+        (function () {
+            // Keep chart reference
+            let paymentChart = null;
+            const paymentChartEl = document.getElementById('paymentChart');
 
-        // read antiforgery token value from rendered container
-        const afInput = document.querySelector('#antiForgery input[name="__RequestVerificationToken"]');
-        const antiforgeryTokenValue = afInput ? afInput.value : '';
+            function safeText(node, value) { if (!node) return; node.textContent = value ?? '-'; }
 
-        let currentPage = @(ViewBag.CurrentPage ?? 1);
-        let currentSearch = '@(Context.Request.Query["search"].ToString())';
-        let currentStatus = '@(Context.Request.Query["status"].ToString())';
+            function initChart(months = [], data = []) {
+                if (!paymentChartEl) return;
+                if (paymentChart) paymentChart.destroy();
+                const ctx = paymentChartEl.getContext('2d');
+                paymentChart = new Chart(ctx, {
+                    type: 'bar', data: { labels: months, datasets: [{ label: 'Revenue', data: data, backgroundColor: '#2f9e44' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: function (v) { return '?' + Number(v).toLocaleString(); } } } } }
+                });
+            }
 
-        // Initialize empty chart
-        let paymentChart = null;
-        function initChart(months = [], data = []){
-            if(paymentChart) paymentChart.destroy();
-            if(!paymentChartEl) return;
-            const ctx = paymentChartEl.getContext('2d');
-            paymentChart = new Chart(ctx, {
-                type: 'bar', data: { labels: months, datasets: [{ label: 'Revenue (?)', data: data, backgroundColor: '#2f9e44' }] },
-                options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ ticks:{ callback: v=> '?' + Number(v).toLocaleString() } } } }
+            function formatAmount(a) {
+                if (a === null || a === undefined) return '-';
+                const n = Number(a);
+                if (isNaN(n)) return '-';
+                return '?' + n.toLocaleString();
+            }
+
+            function formatDate(dt) {
+                if (!dt) return 'Invalid Date';
+                const d = new Date(dt);
+                if (isNaN(d.getTime())) return 'Invalid Date';
+                return d.toLocaleString();
+            }
+
+            function getProp(obj, names) {
+                for (const n of names) { if (obj[n] !== undefined && obj[n] !== null) return obj[n]; }
+                return undefined;
+            }
+
+            function renderRows(items, antiforgeryTokenValue) {
+                const tbody = document.querySelector('.table-wrap tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-td"><i class="fas fa-receipt"></i> No payments found.</td></tr>';
+                    return;
+                }
+                for (const it of items) {
+                    const tr = document.createElement('tr');
+                    const safeCustomer = getProp(it, ['customerName', 'CustomerName']) || '-';
+                    const dateRaw = getProp(it, ['dateTime', 'DateTime']);
+                    const dateStr = formatDate(dateRaw);
+                    const txn = getProp(it, ['transactionId', 'TransactionId']) || ('TXN-' + (getProp(it, ['id', 'Id']) || '0'));
+                    const amountVal = getProp(it, ['amount', 'Amount']);
+                    const amountHtml = '<strong>' + formatAmount(amountVal) + '</strong>';
+                    const method = getProp(it, ['method', 'Method']) || '-';
+                    const trip = getProp(it, ['tripName', 'TripName']) || '-';
+                    const idVal = getProp(it, ['id', 'Id']) || '';
+                    const status = getProp(it, ['status', 'Status']) || '-';
+
+                    tr.innerHTML = `
+                                <td><span class="txn-id">${txn}</span></td>
+                                <td><div class="user-cell"><div class="avatar">${(safeCustomer && safeCustomer.length > 0) ? safeCustomer.charAt(0) : '-'}</div><span>${safeCustomer}</span></div></td>
+                                <td>${trip}</td>
+                                <td>${amountHtml}</td>
+                                <td><span class="method-badge"><i class="fas fa-credit-card"></i> ${method}</span></td>
+                                <td>${dateStr}</td>
+                                <td><span class="badge-status ${status.toLowerCase()}">${status}</span></td>
+                                <td>
+                                    <form method="post" action="/Admin/UpdatePaymentStatus">
+                                        <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryTokenValue || ''}" />
+                                        <input type="hidden" name="id" value="${idVal}" />
+                                        <select name="status" class="mini-select" onchange="this.form.submit()" title="Change payment status">
+                                            <option value="">Change</option>
+                                            <option value="Completed" ${status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                            <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                            <option value="Processing" ${status === 'Processing' ? 'selected' : ''}>Processing</option>
+                                            <option value="Failed" ${status === 'Failed' ? 'selected' : ''}>Failed</option>
+                                        </select>
+                                    </form>
+                                </td>
+                            `;
+                    tbody.appendChild(tr);
+                }
+            }
+
+            function renderPagination(totalPages, current, onPage) {
+                const p = document.querySelector('.pagination');
+                if (!p) return;
+                p.innerHTML = '';
+                if (totalPages <= 1) return;
+                for (let i = 1; i <= totalPages; i++) {
+                    const a = document.createElement('a');
+                    a.href = '#'; a.className = 'page-btn' + (i === current ? ' active' : ''); a.textContent = i;
+                    a.addEventListener('click', function (e) { e.preventDefault(); if (typeof onPage === 'function') onPage(i); });
+                    p.appendChild(a);
+                }
+            }
+
+            // Fetch data from server PaymentsData endpoint
+            async function loadPayments(page = 1, search = '', status = '') {
+                const statsTotalRevenue = document.querySelector('.stats-grid .stat-card:nth-child(1) h3');
+                const statsTotalTx = document.querySelector('.stats-grid .stat-card:nth-child(2) h3');
+                const statsPending = document.querySelector('.stats-grid .stat-card:nth-child(3) h3');
+                const statsFailed = document.querySelector('.stats-grid .stat-card:nth-child(4) h3');
+
+                const afInput = document.querySelector('#antiForgery input[name="__RequestVerificationToken"]');
+                const antiforgeryTokenValue = afInput ? afInput.value : '';
+
+                const url = `/Admin/PaymentsData?page=${page}&search=${encodeURIComponent(search || '')}&status=${encodeURIComponent(status || '')}`;
+                try {
+                    const res = await fetch(url, { credentials: 'same-origin' });
+                    if (!res.ok) { console.error('PaymentsData failed', res.status); return; }
+                    const json = await res.json();
+
+                    safeText(statsTotalRevenue, json.stats && json.stats.totalRevenue ? Number(json.stats.totalRevenue).toLocaleString() : '0');
+                    safeText(statsTotalTx, json.stats ? json.stats.totalTransactions : '0');
+                    safeText(statsPending, json.stats && json.stats.pending ? Number(json.stats.pending).toLocaleString() : '0');
+                    safeText(statsFailed, json.stats && json.stats.refunds ? Number(json.stats.refunds).toLocaleString() : '0');
+
+                    renderRows(json.items, antiforgeryTokenValue);
+
+                    renderPagination(json.paging.totalPages, json.paging.currentPage, function (page) { loadPayments(page, currentSearch, currentStatus); });
+
+                    initChart(json.chart.months || [], (json.chart.revenue || []).map(v => Number(v) || 0));
+                } catch (err) { console.error(err); }
+            }
+
+            // state
+            let currentPage = @(ViewBag.CurrentPage ?? 1);
+            let currentSearch = '@(Context.Request.Query["search"].ToString())';
+            let currentStatus = '@(Context.Request.Query["status"].ToString())';
+
+            // wire up filter and initial load on DOM ready
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.querySelector('.filter-bar');
+                if (form) {
+                    form.addEventListener('submit', function (e) { e.preventDefault(); const fd = new FormData(form); const s = fd.get('search') || ''; const st = fd.get('status') || ''; currentSearch = s; currentStatus = st; loadPayments(1, s, st); });
+                }
+                loadPayments(currentPage, currentSearch, currentStatus);
             });
-        }
-
-        // Render rows helper
-        function renderRows(items){
-            const tbody = document.querySelector('.table-wrap tbody');
-            tbody.innerHTML = '';
-            if(!items || items.length === 0){
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-td"><i class="fas fa-receipt"></i> No payments found.</td></tr>';
-                return;
-            }
-            for(const it of items){
-                const tr = document.createElement('tr');
-                const safeCustomer = it.CustomerName || '-';
-                const dateStr = new Date(it.DateTime).toLocaleString();
-                tr.innerHTML = `
-                    <td><span class="txn-id">${it.TransactionId}</span></td>
-                    <td><div class="user-cell"><div class="avatar">${safeCustomer.charAt(0)}</div><span>${safeCustomer}</span></div></td>
-                    <td>${it.TripName}</td>
-                    <td><strong>?${Number(it.Amount).toLocaleString()}</strong></td>
-                    <td><span class="method-badge"><i class="fas fa-credit-card"></i> ${it.Method}</span></td>
-                    <td>${dateStr}</td>
-                    <td><span class="badge-status ${(it.Status||'').toLowerCase()}">${it.Status}</span></td>
-                    <td>
-                        <form method="post" action="/Admin/UpdatePaymentStatus">
-                            <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryTokenValue}" />
-                            <input type="hidden" name="id" value="${it.Id}" />
-                            <select name="status" class="mini-select" onchange="this.form.submit()" title="Change payment status">
-                                <option value="">Change</option>
-                                <option value="Completed" ${it.Status==='Completed'?'selected':''}>Completed</option>
-                                <option value="Pending" ${it.Status==='Pending'?'selected':''}>Pending</option>
-                                <option value="Processing" ${it.Status==='Processing'?'selected':''}>Processing</option>
-                                <option value="Failed" ${it.Status==='Failed'?'selected':''}>Failed</option>
-                            </select>
-                        </form>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            }
-        }
-
-        // Fetch data from server PaymentsData endpoint
-        async function loadPayments(page = 1, search = '', status = ''){
-            currentPage = page; currentSearch = search; currentStatus = status;
-            const url = `/Admin/PaymentsData?page=${page}&search=${encodeURIComponent(search||'')}&status=${encodeURIComponent(status||'')}`;
-            try{
-                const res = await fetch(url, { credentials: 'same-origin' });
-                if(!res.ok) { console.error('PaymentsData failed', res.status); return; }
-                const json = await res.json();
-                // update stats
-                statsTotalRevenue.textContent = (json.stats && json.stats.totalRevenue) ? Number(json.stats.totalRevenue).toLocaleString() : '0';
-                statsTotalTx.textContent = json.stats ? json.stats.totalTransactions : 0;
-                statsPending.textContent = (json.stats && json.stats.pending) ? Number(json.stats.pending).toLocaleString() : '0';
-                statsFailed.textContent = (json.stats && json.stats.refunds) ? Number(json.stats.refunds).toLocaleString() : '0';
-
-                // render rows
-                renderRows(json.items);
-
-                // pagination
-                renderPagination(json.paging.totalPages, json.paging.currentPage);
-
-                // update chart
-                initChart(json.chart.months, json.chart.revenue.map(v=>Number(v)));
-            }catch(err){console.error(err);}        }
-
-        function renderPagination(totalPages, current){
-            const p = document.querySelector('.pagination');
-            if(!p) return;
-            p.innerHTML='';
-            if(totalPages <= 1) return;
-            for(let i=1;i<=totalPages;i++){
-                const a = document.createElement('a');
-                a.href = '#'; a.className = 'page-btn' + (i===current?' active':''); a.textContent = i;
-                a.addEventListener('click', function(e){ e.preventDefault(); loadPayments(i, currentSearch, currentStatus); });
-                p.appendChild(a);
-            }
-        }
-
-        // Wire up filter form to load dynamically
-        document.addEventListener('DOMContentLoaded', function(){
-            const form = document.querySelector('.filter-bar');
-            if(form){
-                form.addEventListener('submit', function(e){ e.preventDefault(); const fd = new FormData(form); const s = fd.get('search') || ''; const st = fd.get('status') || ''; loadPayments(1, s, st); });
-            }
-            // initial load
-            loadPayments(currentPage, currentSearch, currentStatus);
-        });
+        })();
     </script>
 }
 
@@ -205,6 +303,3 @@
         <div class="pagination"></div>
     </div>
 </div>
-
-
-

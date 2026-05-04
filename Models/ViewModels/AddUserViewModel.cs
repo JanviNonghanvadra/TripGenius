@@ -20,5 +20,9 @@ namespace TripGenius.Models.ViewModels
         [Required]
         [MinLength(6)]
         public string Password { get; set; }
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [Phone(ErrorMessage = "Invalid phone number")]
+        public string Phone { get; set; }
     }
 }

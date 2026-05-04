@@ -82,6 +82,144 @@ namespace TripGenius.Controllers
         // USERS
         public IActionResult Users(string search, string role, string status, int page = 1)
         {
+            ViewData["ActivePage"] = "Users";
+            SetNavbarData();
+
+            var query = _context.Users.AsQueryable();
+
+            // Include Phone in search
+            if (!string.IsNullOrEmpty(search))
+            {
+                var l = search.ToLower();
+                query = query.Where(u =>
+                    u.Name.ToLower().Contains(l) ||
+                    u.Email.ToLower().Contains(l) ||
+                    (u.Phone != null && u.Phone.ToLower().Contains(l)) // ADDED
+                );
+            }
+
+            if (!string.IsNullOrEmpty(role) && role != "All Roles")
+                query = query.Where(u => u.Role == role);
+
+            if (!string.IsNullOrEmpty(status) && status != "All Status")
+                query = query.Where(u => (u.Status ?? "Active") == status);
+
+            int pageSize = 8;
+            int total = query.Count();
+
+            var users = query
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new UserViewModel
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    Role = u.Role,
+                    Phone = u.Phone, // already correct
+                    CreatedAt = u.CreatedAt,
+                    Status = string.IsNullOrEmpty(u.Status) ? "Active" : u.Status
+                })
+                .ToList();
+
+            var all = _context.Users.ToList();
+
+            ViewBag.TotalUsers = all.Count;
+            ViewBag.ActiveUsers = all.Count(u => (u.Status ?? "Active") == "Active");
+            ViewBag.RegisteredUsers = all.Count(u => u.Role == "User");
+            ViewBag.NewThisMonth = all.Count(u =>
+                u.CreatedAt.Month == DateTime.Now.Month &&
+                u.CreatedAt.Year == DateTime.Now.Year
+            );
+
+            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.CurrentPage = page;
+
+            return View(users);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteUser(int id)
+        {
+            var u = _context.Users.Find(id);
+            if (u != null)
+            {
+                _context.Users.Remove(u);
+                _context.SaveChanges();
+                TempData["Success"] = "User deleted.";
+            }
+            return RedirectToAction("Users");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ToggleUserStatus(int id)
+        {
+            var u = _context.Users.Find(id);
+            if (u != null)
+            {
+                u.Status = (u.Status == "Active") ? "Inactive" : "Active";
+                _context.SaveChanges();
+                TempData["Success"] = $"Status changed to {u.Status}.";
+            }
+            return RedirectToAction("Users");
+        }
+
+        public IActionResult AddUser()
+        {
+            ViewData["ActivePage"] = "Users";
+            SetNavbarData();
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AddUser(AddUserViewModel model)
+        {
+            ViewData["ActivePage"] = "Users";
+            SetNavbarData();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            // Email check
+            if (_context.Users.Any(u => u.Email == model.Email))
+            {
+                ModelState.AddModelError("Email", "Email already exists.");
+                return View(model);
+            }
+
+            // Phone duplicate check (optional but recommended)
+            if (_context.Users.Any(u => u.Phone == model.Phone))
+            {
+                ModelState.AddModelError("Phone", "Phone number already exists.");
+                return View(model);
+            }
+
+            var user = new User
+            {
+                Name = model.FullName,
+                Email = model.Email,
+                Phone = model.Phone,   
+                Role = model.Role,
+                Status = model.Status,
+                CreatedAt = DateTime.Now
+            };
+
+            var h = new PasswordHasher<User>();
+            user.PasswordHash = h.HashPassword(user, model.Password);
+
+            _context.Users.Add(user);
+            _context.SaveChanges();
+
+            TempData["Success"] = "User added!";
+            return RedirectToAction("Users");
+        }
+        /*// USERS
+        public IActionResult Users(string search, string role, string status, int page = 1)
+        {
             ViewData["ActivePage"] = "Users"; SetNavbarData();
             var query = _context.Users.AsQueryable();
             if (!string.IsNullOrEmpty(search)) { var l = search.ToLower(); query = query.Where(u => u.Name.ToLower().Contains(l) || u.Email.ToLower().Contains(l)); }
@@ -120,7 +258,7 @@ namespace TripGenius.Controllers
             var h=new PasswordHasher<User>(); user.PasswordHash=h.HashPassword(user,model.Password);
             _context.Users.Add(user); _context.SaveChanges(); TempData["Success"]="User added!";
             return RedirectToAction("Users");
-        }
+        }*/
 
         // TRIPS
         public IActionResult Trips(string search, string status, int page = 1)
@@ -139,30 +277,92 @@ namespace TripGenius.Controllers
             return View(trips);
         }
 
-        public IActionResult AddTrip() { ViewData["ActivePage"]="Trips"; SetNavbarData(); return View(); }
+        public IActionResult AddTrip()
+        {
+            ViewData["ActivePage"] = "Trips";
+            SetNavbarData();
+            return View();
+        }
 
-        [HttpPost][ValidateAntiForgeryToken]
-        public IActionResult AddTrip(Trip model) {
-            ViewData["ActivePage"]="Trips"; SetNavbarData();
-            if(!ModelState.IsValid) return View(model);
-            model.CreatedAt=DateTime.Now; _context.Trips.Add(model); _context.SaveChanges();
-            TempData["Success"]="Trip added!"; return RedirectToAction("Trips");
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AddTrip(Trip model)
+        {
+            ViewData["ActivePage"] = "Trips";
+            SetNavbarData();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            // Validate date range
+            if (model.EndDate < model.StartDate)
+            {
+                ModelState.AddModelError("EndDate", "End date must be after start date.");
+                return View(model);
+            }
+
+            /*// OPTIONAL: auto-calculate duration (if you still keep DurationDays in DB)
+            model.DurationDays = (model.EndDate - model.StartDate).Days;*/
+
+            // Set created date
+            model.CreatedAt = DateTime.Now;
+
+            _context.Trips.Add(model);
+            _context.SaveChanges();
+
+            TempData["Success"] = "Trip added!";
+            return RedirectToAction("Trips");
         }
 
         [HttpGet]
-        public IActionResult EditTrip(int id) {
-            ViewData["ActivePage"]="Trips"; SetNavbarData();
-            var t=_context.Trips.Find(id); if(t==null) return NotFound(); return View(t);
+        public IActionResult EditTrip(int id)
+        {
+            ViewData["ActivePage"] = "Trips";
+            SetNavbarData();
+
+            var t = _context.Trips.Find(id);
+            if (t == null) return NotFound();
+
+            return View(t);
         }
 
-        [HttpPost][ValidateAntiForgeryToken]
-        public IActionResult EditTrip(Trip model) {
-            ViewData["ActivePage"]="Trips"; SetNavbarData();
-            if(!ModelState.IsValid) return View(model);
-            var t=_context.Trips.Find(model.Id); if(t==null) return NotFound();
-            t.Title=model.Title; t.Destination=model.Destination; t.Description=model.Description;
-            t.Price=model.Price; t.DurationDays=model.DurationDays; t.Status=model.Status; t.ImageUrl=model.ImageUrl;
-            _context.SaveChanges(); TempData["Success"]="Trip updated!"; return RedirectToAction("Trips");
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditTrip(Trip model)
+        {
+            ViewData["ActivePage"] = "Trips";
+            SetNavbarData();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            // ? Validate dates
+            if (model.EndDate < model.StartDate)
+            {
+                ModelState.AddModelError("EndDate", "End date must be after start date.");
+                return View(model);
+            }
+
+            var t = _context.Trips.Find(model.Id);
+            if (t == null) return NotFound();
+
+            //  Update fields
+            t.Title = model.Title;
+            t.Destination = model.Destination;
+            t.Description = model.Description;
+            t.Price = model.Price;
+            t.StartDate = model.StartDate;  
+            t.EndDate = model.EndDate;       
+            t.Status = model.Status;
+            t.ImageUrl = model.ImageUrl;
+
+            /*// ? OPTIONAL: if DurationDays still exists in DB
+            t.DurationDays = (model.EndDate - model.StartDate).Days + 1;*/
+
+            _context.SaveChanges();
+
+            TempData["Success"] = "Trip updated!";
+            return RedirectToAction("Trips");
         }
 
         [HttpPost][ValidateAntiForgeryToken]
@@ -202,7 +402,7 @@ namespace TripGenius.Controllers
             return RedirectToAction("Bookings");
         }
 
-        // PAYMENTS
+        /*// PAYMENTS
         public IActionResult Payments(string search, string status, int page = 1)
         {
             ViewData["ActivePage"] = "Payments"; SetNavbarData();
@@ -222,9 +422,31 @@ namespace TripGenius.Controllers
             ViewBag.Months=months.Select(m=>m.ToString("MMM")).ToArray();
             ViewBag.RevenueData=months.Select(m=>allP.Where(p=>p.PaymentDate.Year==m.Year&&p.PaymentDate.Month==m.Month).Sum(p=>(decimal?)p.Amount)??0).ToArray();
             return View(payments);
+        }*/
+
+        // PAYMENTS
+        public IActionResult Payments(string search, string status, int page = 1)
+        {
+            ViewData["ActivePage"] = "Payments"; SetNavbarData();
+            int pageSize = 8;
+            var query = _context.Payments.Include(p => p.Booking).ThenInclude(b => b.User).Include(p => p.Booking).ThenInclude(b => b.Trip).AsQueryable();
+            if (!string.IsNullOrEmpty(search)) { var l = search.ToLower(); query = query.Where(p => p.Booking.User.Name.ToLower().Contains(l) || p.Booking.Trip.Title.ToLower().Contains(l)); }
+            if (!string.IsNullOrEmpty(status) && status != "All Status") query = query.Where(p => p.Status == status);
+            int total = query.Count();
+            var payments = query.OrderByDescending(p => p.PaymentDate).Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(p => new PaymentViewModel { Id = p.Id, TransactionId = "TXN-" + p.Id.ToString("D5"), CustomerName = p.Booking.User.Name, TripName = p.Booking.Trip.Title, Amount = p.Amount, Method = p.PaymentMethod, DateTime = p.PaymentDate, Status = p.Status }).ToList();
+            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize); ViewBag.CurrentPage = page;
+            var allP = _context.Payments.ToList();
+            ViewBag.TotalRevenue = allP.Sum(p => p.Amount).ToString("N0"); ViewBag.TotalTransactions = allP.Count;
+            ViewBag.PendingPayments = allP.Where(p => p.Status == "Pending").Sum(p => (decimal?)p.Amount) ?? 0;
+            ViewBag.Refunds = allP.Where(p => p.Status == "Failed").Sum(p => (decimal?)p.Amount) ?? 0;
+            var now = DateTime.Now; var months = Enumerable.Range(0, 6).Select(i => now.AddMonths(-5 + i)).ToList();
+            ViewBag.Months = months.Select(m => m.ToString("MMM")).ToArray();
+            ViewBag.RevenueData = months.Select(m => allP.Where(p => p.PaymentDate.Year == m.Year && p.PaymentDate.Month == m.Month).Sum(p => (decimal?)p.Amount) ?? 0).ToArray();
+            return View(payments);
         }
 
-        // New: return JSON for AJAX
+        /*// New: return JSON for AJAX
         [HttpGet]
         public IActionResult PaymentsData(string search, string status, int page = 1)
         {
@@ -264,7 +486,53 @@ namespace TripGenius.Controllers
             };
 
             return Json(result);
+        }*/
+
+        // New: return JSON for AJAX
+        [HttpGet]
+        public IActionResult PaymentsData(string search, string status, int page = 1)
+        {
+            int pageSize = 8;
+            var query = _context.Payments.Include(p => p.Booking).ThenInclude(b => b.User).Include(p => p.Booking).ThenInclude(b => b.Trip).AsQueryable();
+            if (!string.IsNullOrEmpty(search)) { var l = search.ToLower(); query = query.Where(p => p.Booking.User.Name.ToLower().Contains(l) || p.Booking.Trip.Title.ToLower().Contains(l)); }
+            if (!string.IsNullOrEmpty(status) && status != "All Status") query = query.Where(p => p.Status == status);
+
+            int total = query.Count();
+            var items = query.OrderByDescending(p => p.PaymentDate).Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(p => new {
+                    Id = p.Id,
+                    TransactionId = "TXN-" + p.Id.ToString("D5"),
+                    CustomerName = p.Booking != null && p.Booking.User != null ? p.Booking.User.Name : "-",
+                    TripName = p.Booking != null && p.Booking.Trip != null ? p.Booking.Trip.Title : "-",
+                    Amount = p.Amount,
+                    Method = string.IsNullOrEmpty(p.PaymentMethod) ? "-" : p.PaymentMethod,
+                    // serialize date as ISO 8601 so client JS new Date(...) works reliably
+                    DateTime = p.PaymentDate != DateTime.MinValue ? p.PaymentDate.ToString("o") : null,
+                    Status = string.IsNullOrEmpty(p.Status) ? "-" : p.Status
+                }).ToList();
+
+            var allP = _context.Payments.ToList();
+            var now = DateTime.Now; var months = Enumerable.Range(0, 6).Select(i => now.AddMonths(-5 + i)).ToList();
+            var monthsLabels = months.Select(m => m.ToString("MMM")).ToArray();
+            var revenueData = months.Select(m => allP.Where(p => p.PaymentDate.Year == m.Year && p.PaymentDate.Month == m.Month).Sum(p => (decimal?)p.Amount) ?? 0).ToArray();
+
+            var result = new
+            {
+                items,
+                paging = new { totalPages = (int)Math.Ceiling((double)total / pageSize), currentPage = page },
+                stats = new
+                {
+                    totalRevenue = allP.Sum(p => p.Amount),
+                    totalTransactions = allP.Count,
+                    pending = allP.Where(p => p.Status == "Pending").Sum(p => (decimal?)p.Amount) ?? 0,
+                    refunds = allP.Where(p => p.Status == "Failed").Sum(p => (decimal?)p.Amount) ?? 0
+                },
+                chart = new { months = monthsLabels, revenue = revenueData }
+            };
+
+            return Json(result);
         }
+
 
         // REVIEWS
         public IActionResult Reviews(string search, string status, int page = 1)
